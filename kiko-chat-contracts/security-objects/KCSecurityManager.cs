@@ -1,15 +1,11 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using System.Globalization;
-using System.Text.RegularExpressions;
-using System.Net.Sockets;
-using System.Net.Mail;
 using System.Net;
+using System.Net.Mail;
+using System.Net.Sockets;
+using System.Text.RegularExpressions;
 
-namespace kiko_chat_contracts
+
+namespace kiko_chat_contracts.security_objects
 {
     public static class KCSecurityManager
     {

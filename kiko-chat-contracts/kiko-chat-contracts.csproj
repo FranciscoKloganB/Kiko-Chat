@@ -44,12 +44,10 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="data-structs\GroupData.cs" />
-    <Compile Include="data-structs\MemberData.cs" />
-    <Compile Include="domain-objects\Group.cs" />
-    <Compile Include="domain-objects\Member.cs" />
-    <Compile Include="KCInterfaces.cs" />
-    <Compile Include="KCSecurityManager.cs" />
+    <Compile Include="data-objects\GroupData.cs" />
+    <Compile Include="data-objects\MemberData.cs" />
+    <Compile Include="web-services\KCInterfaces.cs" />
+    <Compile Include="security-objects\KCSecurityManager.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
   <ItemGroup>

@@ -50,8 +50,9 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="controller\OpenClient.cs" />
-    <Compile Include="controller\ClientService.cs" />
+    <Compile Include="domain-objects\OpenClient.cs" />
+    <Compile Include="domain-objects\ClientService.cs" />
+    <Compile Include="domain-objects\Member.cs" />
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="views\ClientGuiForm.cs">

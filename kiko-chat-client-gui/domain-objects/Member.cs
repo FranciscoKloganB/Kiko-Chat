@@ -1,10 +1,9 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+using System.Collections.Generic;
+using kiko_chat_contracts.data_objects;
 
-namespace kiko_chat_contracts
+namespace kiko_chat_client_gui.domain_objects
 {
     public class Member
     {

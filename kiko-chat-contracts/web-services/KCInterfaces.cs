@@ -1,11 +1,9 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using System.IO;
-// BEGIN INVOKE TO AVOID DEADLOCKS 
-namespace kiko_chat_contracts
+using kiko_chat_contracts.data_objects;
+
+// BeginInvoke instead of Invoke TO AVOID DEADLOCKS OF SYNCHRONOUS REMOTE OBJECT INVOCATION.
+namespace kiko_chat_contracts.web_services
 {
     // TODO VERIFY THAT SERVERS ALSO INFORM OF NAME CHANGES FROM OTHER MEMBERS WHILE SOME MEMBER WAS DISCONNECTED FROM GROUP;
     public interface IServerServices

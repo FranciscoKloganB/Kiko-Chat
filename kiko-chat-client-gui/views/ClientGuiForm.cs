@@ -1,11 +1,12 @@
 ﻿using System;
+using System.IO;
 using System.Drawing;
 using System.Windows.Forms;
 using System.Collections.Generic;
-using System.IO;
 using Newtonsoft.Json;
-using kiko_chat_contracts;
-using kiko_chat_client_gui.controller;
+using kiko_chat_contracts.data_objects;
+using kiko_chat_client_gui.domain_objects;
+using kiko_chat_contracts.security_objects;
 
 namespace kiko_chat_client_gui
 {
@@ -18,8 +19,6 @@ namespace kiko_chat_client_gui
         private bool mouseDown;
         private Point lastLocation;
         private Member member;
-        private TcpChannel tcpChannel;
-        private ClientService clientService;
 
         public ClientGuiForm()
         {

@@ -1,10 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-
-namespace kiko_chat_contracts
+﻿namespace kiko_chat_contracts.data_objects
 {
     public class MemberData
     {

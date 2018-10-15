@@ -1,10 +1,11 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using System.Collections.Generic;
+using kiko_chat_contracts.data_objects;
 
-namespace kiko_chat_contracts {
+namespace kiko_chat_server_console.domain {
     public class Group
     {
         public string Ip { get; set; }

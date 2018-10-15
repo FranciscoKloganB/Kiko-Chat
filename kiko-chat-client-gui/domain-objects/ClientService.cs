@@ -1,13 +1,8 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using System.Net;
-using System.Net.Sockets;
-using kiko_chat_contracts;
+using kiko_chat_contracts.data_objects;
+using kiko_chat_contracts.web_services;
 
-namespace kiko_chat_client_gui.controller
+namespace kiko_chat_client_gui.domain_objects
 { 
     public class ClientService : MarshalByRefObject, IClientServices
     {
