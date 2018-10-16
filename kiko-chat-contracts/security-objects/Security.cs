@@ -7,7 +7,7 @@ using System.Text.RegularExpressions;
 
 namespace kiko_chat_contracts.security_objects
 {
-    public static class KCSecurityManager
+    public static class Security
     {
         public const int MAX_CHARS = 100;
         public const int MAX_NICK_LENGTH = 16;

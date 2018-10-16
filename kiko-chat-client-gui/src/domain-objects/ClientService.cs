@@ -4,7 +4,7 @@ using kiko_chat_contracts.web_services;
 
 namespace kiko_chat_client_gui.domain_objects
 { 
-    public class ClientService : MarshalByRefObject, IClientServices
+    public class ClientService : MarshalByRefObject, IClientObject
     {
         public void AddMemberToGroup(MemberData newmember, GroupData group)
         {

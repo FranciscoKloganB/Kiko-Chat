@@ -54,12 +54,12 @@ namespace kiko_chat_client_gui
 
         private void AcceptNewSetting_Click(object sender, EventArgs e)
         {
-            string ip = KCSecurityManager.ValidateIP(clientAddress.Text);
-            string port = KCSecurityManager.ValidatePort(portBox.Text);
-            string nickname = KCSecurityManager.ValidateNickname(nickNameBox.Text, " Nickname *");
-            string fullname = KCSecurityManager.ValidateRegularName(fullNameBox.Text, " Full Name");
-            string email = KCSecurityManager.ValidateEmail(emailBox.Text);
-            string country = KCSecurityManager.ValidateCountry(countryBox.Text, " Country");
+            string ip = Security.ValidateIP(clientAddress.Text);
+            string port = Security.ValidatePort(portBox.Text);
+            string nickname = Security.ValidateNickname(nickNameBox.Text, " Nickname *");
+            string fullname = Security.ValidateRegularName(fullNameBox.Text, " Full Name");
+            string email = Security.ValidateEmail(emailBox.Text);
+            string country = Security.ValidateCountry(countryBox.Text, " Country");
             MemberProperty = new MemberData(ip, port, nickname, fullname, email, country);
             FormJsonLogin(MemberProperty);
             this.DialogResult = DialogResult.OK;
@@ -79,7 +79,7 @@ namespace kiko_chat_client_gui
 
         private void loginForm_Load(object sender, EventArgs e)
         {
-            clientAddress.Text = KCSecurityManager.GetLocalPublicAddress();
+            clientAddress.Text = Security.GetLocalPublicAddress();
         }
 
         private void clientAddress_Enter(object sender, EventArgs e)

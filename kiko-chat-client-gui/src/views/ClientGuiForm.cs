@@ -203,7 +203,7 @@ namespace kiko_chat_client_gui
 
         private void applyNickNameChangeButton_Click(object sender, EventArgs e)
         {
-            string nickname = KCSecurityManager.ValidateNickname(nickNameChangeBox.Text, " New nickname");
+            string nickname = Security.ValidateNickname(nickNameChangeBox.Text, " New nickname");
             // TODO >> Send new nickname to server and broadcast it to all other users.
             throw new NotImplementedException();
             //member.Nickname = nickname;
