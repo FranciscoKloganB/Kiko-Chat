@@ -19,7 +19,7 @@ namespace kiko_chat_client_gui
         private bool mouseDown;
         private Point lastLocation;
         private Member member;
-        private List<OnGoingClientCommunications> openChats;
+        // private List<OnGoingClientCommunications> openChats;
 
         public ClientGuiForm()
         {

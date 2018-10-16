@@ -6,6 +6,7 @@ using System.Runtime.Remoting.Channels.Tcp;
 using System.Runtime.Serialization.Formatters;
 using kiko_chat_contracts.data_objects;
 using kiko_chat_contracts.web_services;
+using kiko_chat_contracts.security_objects;
 using System.Collections;
 
 namespace kiko_chat_server_console.server_objects
@@ -21,13 +22,13 @@ namespace kiko_chat_server_console.server_objects
         * TcpServerChannel is a reference to the TCP remoting channel that we are using for our server.
         * ObjRef holds an internal reference to the object being presented (marshaled) for remoting
         */
-        private static string serverURI = "serverObject.Rem";
+        private const int RANDOM_PORT = 0;
+        private const string server_api_object = "serverObject.Rem";
+        private bool server_is_active = false;
         private TcpServerChannel serverChannel;
         private ObjRef internalRef;
-        private int tcpPort;
-        private bool serverActive = false;
-        #endregion
 
+        #endregion
         #region IServerObject Member Implementation
 
         public event MessageArrivedEvent MessageArrived;
@@ -76,39 +77,39 @@ namespace kiko_chat_server_console.server_objects
 
         #region Server Implementation
 
-        public void StartServer(int port)
+        public void StartServer()
         {
-            if (serverActive) { return; }
+            if (server_is_active) { return; }
 
-            // The only way to provide a sink to a TcpServerChannel is using a Hashtable. This hash holds the name of the server, used in the URI, and the port on which we remote.
-            Hashtable serverAddress = new Hashtable() {
-                {"name", serverURI},
-                {"port", port}
+            // Create properties for a TcpServerChannel that uses a Binary Sink.
+            Hashtable channelProperties = new Hashtable() {
+                { "name", server_api_object},
+                { "port", RANDOM_PORT }
             };
 
-            // BinaryServerFormatterSinkProvider identifies how we provide events across remoting boundaries (in this case, we chose binary implementation instead of XML).
+            // BinaryServerFormatterSinkProvider we provide events across remoting boundaries with binary implementation instead of XML. Filter to Full in order for events to work properly.
             BinaryServerFormatterSinkProvider serverProv = new BinaryServerFormatterSinkProvider();
-            // We need to set TypeFilterLevel to Full in order for events to work properly.
             serverProv.TypeFilterLevel = TypeFilterLevel.Full;
-            serverChannel = new TcpServerChannel(serverAddress, serverProv);
+            serverChannel = new TcpServerChannel(channelProperties, serverProv);
 
-            Console.WriteLine("Server running at : " + Environment.NewLine + serverAddress["name"] + ":" + serverAddress["port"]);
+            Console.WriteLine($"Server running at: {serverChannel.GetUrlsForUri(server_api_object)[0]}");
+            Console.WriteLine("Press 'Enter' Key to shutdown the server");
 
             try
             {
                 ChannelServices.RegisterChannel(serverChannel, false);
-                internalRef = RemotingServices.Marshal(this, serverAddress["uri"].ToString());
-                serverActive = true;
+                internalRef = RemotingServices.Marshal(this, channelProperties["name"].ToString());
+                server_is_active = true;
             }
             catch (RemotingException rE)
             {
-                Console.WriteLine($"Could not start the server...{Environment.NewLine}" + rE.Message + Environment.NewLine + rE.StackTrace);
+                Console.WriteLine("Could not start the server... " + Environment.NewLine + rE.Message);
             }
         }
 
         public void StopServer()
         {
-            if (!serverActive) { return; }
+            if (!server_is_active) { return; }
 
             RemotingServices.Unmarshal(internalRef);
 
@@ -117,11 +118,13 @@ namespace kiko_chat_server_console.server_objects
                 ChannelServices.UnregisterChannel(serverChannel);
             }
             catch (Exception) { }
+
+            Console.WriteLine($"Stoped server running at: {serverChannel.GetUrlsForUri(server_api_object)[0]}");
         }
 
         private void SafeInvokeMessageArrived(string Message)
         {
-            if (!serverActive) { return;  }
+            if (!server_is_active) { return;  }
             if (MessageArrived == null) { return; }
 
             // We create a temporary delegate for the listener and then store the current invocation list that our event holds.
