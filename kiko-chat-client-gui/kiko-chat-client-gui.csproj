@@ -39,6 +39,7 @@
     <Reference Include="System" />
     <Reference Include="System.Core" />
     <Reference Include="System.Runtime.Remoting" />
+    <Reference Include="System.ServiceModel" />
     <Reference Include="System.Xml.Linq" />
     <Reference Include="System.Data.DataSetExtensions" />
     <Reference Include="Microsoft.CSharp" />
@@ -50,27 +51,27 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="domain-objects\OnGoingClientCommunications.cs" />
-    <Compile Include="domain-objects\ClientService.cs" />
-    <Compile Include="domain-objects\Member.cs" />
+    <Compile Include="src\domain-objects\OnGoingClientCommunications.cs" />
+    <Compile Include="src\domain-objects\ClientService.cs" />
+    <Compile Include="src\domain-objects\Member.cs" />
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
-    <Compile Include="views\ClientGuiForm.cs">
+    <Compile Include="src\views\ClientGuiForm.cs">
       <SubType>Form</SubType>
     </Compile>
-    <Compile Include="views\ClientGuiForm.designer.cs">
+    <Compile Include="src\views\ClientGuiForm.designer.cs">
       <DependentUpon>ClientGuiForm.cs</DependentUpon>
     </Compile>
-    <Compile Include="views\GroupForm.cs">
+    <Compile Include="src\views\GroupForm.cs">
       <SubType>Form</SubType>
     </Compile>
-    <Compile Include="views\GroupForm.designer.cs">
+    <Compile Include="src\views\GroupForm.designer.cs">
       <DependentUpon>GroupForm.cs</DependentUpon>
     </Compile>
-    <Compile Include="views\LoginForm.cs">
+    <Compile Include="src\views\LoginForm.cs">
       <SubType>Form</SubType>
     </Compile>
-    <Compile Include="views\LoginForm.designer.cs">
+    <Compile Include="src\views\LoginForm.designer.cs">
       <DependentUpon>LoginForm.cs</DependentUpon>
     </Compile>
     <EmbeddedResource Include="Properties\Resources.resx">
@@ -82,13 +83,13 @@
       <AutoGen>True</AutoGen>
       <DependentUpon>Resources.resx</DependentUpon>
     </Compile>
-    <EmbeddedResource Include="views\ClientGuiForm.resx">
+    <EmbeddedResource Include="src\views\ClientGuiForm.resx">
       <DependentUpon>ClientGuiForm.cs</DependentUpon>
     </EmbeddedResource>
-    <EmbeddedResource Include="views\GroupForm.resx">
+    <EmbeddedResource Include="src\views\GroupForm.resx">
       <DependentUpon>GroupForm.cs</DependentUpon>
     </EmbeddedResource>
-    <EmbeddedResource Include="views\LoginForm.resx">
+    <EmbeddedResource Include="src\views\LoginForm.resx">
       <DependentUpon>LoginForm.cs</DependentUpon>
     </EmbeddedResource>
     <None Include="packages.config" />
