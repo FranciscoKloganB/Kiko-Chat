@@ -46,7 +46,7 @@
   <ItemGroup>
     <Compile Include="data-objects\GroupData.cs" />
     <Compile Include="data-objects\MemberData.cs" />
-    <Compile Include="web-services\KCInterfaces.cs" />
+    <Compile Include="web-services\EventDeclaration.cs" />
     <Compile Include="security-objects\KCSecurityManager.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>

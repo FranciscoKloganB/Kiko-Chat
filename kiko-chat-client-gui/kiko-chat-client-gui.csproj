@@ -50,7 +50,7 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="domain-objects\OpenClient.cs" />
+    <Compile Include="domain-objects\OnGoingClientCommunications.cs" />
     <Compile Include="domain-objects\ClientService.cs" />
     <Compile Include="domain-objects\Member.cs" />
     <Compile Include="Program.cs" />
