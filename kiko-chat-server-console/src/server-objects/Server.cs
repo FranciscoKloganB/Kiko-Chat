@@ -33,7 +33,7 @@ namespace kiko_chat_server_console.server_objects
 
         public event MessageArrivedEvent MessageArrived;
 
-        public byte[] Connect(DateTime lastseenmessage, MemberData member, GroupData group)
+        public byte[] Connect(MemberData member, GroupData group)
         {
             throw new NotImplementedException();
         }
