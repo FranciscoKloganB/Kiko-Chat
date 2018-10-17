@@ -51,7 +51,7 @@ namespace kiko_chat_contracts.web_services
         * User sends timestamp of last message he owns so that he can update is chat by turning the recieved byte array into a File using StreamReader.
         */
         [OperationContract]
-        byte[] Connect(DateTime lastseenmessage, MemberData member, GroupData group);
+        byte[] Connect(MemberData member, GroupData group);
 
         /*
         * Close connection between member group. Whenever a user recieves a new message he should store the timestamp, so the disconnect method does not to return timestamps.

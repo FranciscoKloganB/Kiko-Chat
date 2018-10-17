@@ -5,8 +5,8 @@ using System.Windows.Forms;
 using System.Collections.Generic;
 using Newtonsoft.Json;
 using kiko_chat_contracts.data_objects;
-using kiko_chat_client_gui.domain_objects;
 using kiko_chat_contracts.security_objects;
+using kiko_chat_client_gui.domain_objects;
 
 namespace kiko_chat_client_gui
 {
@@ -19,15 +19,14 @@ namespace kiko_chat_client_gui
         private bool mouseDown;
         private Point lastLocation;
         private Member member;
-        // private List<OnGoingClientCommunications> openChats;
+        private List<Client> OpenChats = new List<Client>();
 
         public ClientGuiForm()
         {
             InitializeComponent();
             using (LoginForm loginForm = new LoginForm())
             {
-                MemberData memberData;
-
+                MemberData memberData;      
                 if (loginForm.ShowDialog() == DialogResult.OK)
                 {
                     memberData = loginForm.MemberProperty;
@@ -121,7 +120,7 @@ namespace kiko_chat_client_gui
                         {
                             JoinGroupRequest(groupData, this.member);
                         }
-                        UpdateGroupAndMember(new GroupData(groupData.Ip, groupData.Port, groupData.Name));
+                        UpdateGroupAndMember(new GroupData(groupData.Ip, groupData.Port, groupData.Name, default(DateTime)));
                     }
                     catch (Exception exc)
                     {
@@ -168,10 +167,9 @@ namespace kiko_chat_client_gui
         private void ConnectButton_Click(object sender, EventArgs e)
         {
             // TODO >> Inform server that this member is about to connect to this group, temporarily >> Open connection.
-            string hostAddress = GetSelectedGroupHostAddress();
-            // Send message to SV
-            // Open TCP connection
-            ShowGroupMembers();
+            GroupData groupdata = member.Find_Group_By_Name(groupSelectorBox.SelectedItem.ToString());
+            OpenChats.Add(new Client(chatWindow, member.Get_Member_Data(), groupdata));
+            // ShowGroupMembers();
         }
 
         private void DisconnectButton_Click(object sender, EventArgs e)

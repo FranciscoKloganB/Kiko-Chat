@@ -23,6 +23,16 @@ namespace kiko_chat_contracts.data_objects
             Country = country;
         }
 
+        public MemberData(string currentlocation, string nickname, string name, string email, string country)
+        {
+            string[] location_split = currentlocation.Split(':');
+            Ip = location_split[0];
+            Port = location_split[1];
+            Nickname = nickname;
+            Name = name;
+            Email = email;
+            Country = country;
+        }
 
         /*
         * The special constructor is used to deserialize values.

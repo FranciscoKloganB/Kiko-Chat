@@ -19,8 +19,8 @@ namespace kiko_chat_client_gui
             string ip = Security.ValidateIP(ipBox.Text);
             string port = Security.ValidatePort(portBox.Text);
             string groupName = Security.ValidateRegularName(groupNameBox.Text, " Full Name");
-
-            GroupProperty = new GroupData(ip, port, groupName);
+            
+            GroupProperty = new GroupData(ip, port, groupName, default(DateTime));
 
             this.DialogResult = DialogResult.OK;
         }

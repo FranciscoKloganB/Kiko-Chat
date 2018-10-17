@@ -36,6 +36,11 @@ namespace kiko_chat_client_gui.domain_objects
             groups = (grouplist == null ? new List<GroupData>() : grouplist);
         }
 
+        public MemberData Get_Member_Data()
+        {
+            return new MemberData(CurrentLocation, Nickname, Name, Email, Country);
+        }
+
         public GroupData Find_Group_By_Name(string groupname)
         {
             return groups.Find(group => String.Equals(group.Name, groupname));

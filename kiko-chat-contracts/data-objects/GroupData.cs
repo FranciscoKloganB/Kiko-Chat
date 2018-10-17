@@ -9,12 +9,14 @@ namespace kiko_chat_contracts.data_objects
         public string Ip { get; set; }
         public string Port { get; set; }
         public string Name { get; set; }
+        public DateTime LastKnownMessage { get; set; }
 
-        public GroupData(string ip, string port, string name)
+        public GroupData(string ip, string port, string name, DateTime lastknownmessage)
         {
             Ip = ip;
             Port = port;
             Name = name;
+            LastKnownMessage = lastknownmessage;
         }
 
         /*
@@ -49,8 +51,5 @@ namespace kiko_chat_contracts.data_objects
         {
             return Ip + ":" + Port + "; " + Name + ";";
         }
-
-
-
     }
 }
