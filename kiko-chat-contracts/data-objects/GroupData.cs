@@ -1,5 +1,7 @@
 ﻿using System;
 using System.Runtime.Serialization;
+using System.Collections.Generic;
+using kiko_chat_contracts.data_objects;
 
 namespace kiko_chat_contracts.data_objects
 {
@@ -8,8 +10,9 @@ namespace kiko_chat_contracts.data_objects
     {
         public string Ip { get; set; }
         public string Port { get; set; }
-        public string Name { get; set; }
+        public string Name { get; set; }     
         public DateTime LastKnownMessage { get; set; }
+        // DEPRECATED >> public List<MemberData> GroupMembers { get; set; }
 
         public GroupData(string ip, string port, string name, DateTime lastknownmessage)
         {
@@ -17,6 +20,7 @@ namespace kiko_chat_contracts.data_objects
             Port = port;
             Name = name;
             LastKnownMessage = lastknownmessage;
+            // DEPRECATED >> List<MemberData> groupmembers = null GroupMembers = (groupmembers != null) ? groupmembers : new List<MemberData>();
         }
 
         /*
@@ -28,6 +32,8 @@ namespace kiko_chat_contracts.data_objects
             Ip = (string)info.GetValue("Ip", typeof(string));
             Port = (string)info.GetValue("Port", typeof(string));
             Name = (string)info.GetValue("Name", typeof(string));
+            LastKnownMessage = (DateTime)info.GetValue("LastKnownMessage", typeof(DateTime));
+            // DEPRECATED >> GroupMembers = (List<MemberData>)info.GetValue("GroupMembers", typeof(List<MemberData>));
         }
 
 
@@ -37,9 +43,11 @@ namespace kiko_chat_contracts.data_objects
         public void GetObjectData(SerializationInfo info, StreamingContext context)
         {
             // Use the AddValue method to specify serialized values.
-            info.AddValue("props", Ip, typeof(string));
-            info.AddValue("props", Port, typeof(string));
-            info.AddValue("props", Name, typeof(string));
+            info.AddValue("Ip", Ip, typeof(string));
+            info.AddValue("Port", Port, typeof(string));
+            info.AddValue("Name", Name, typeof(string));
+            info.AddValue("LastKnownMessage", LastKnownMessage, typeof(DateTime));
+            // DEPRECATED >> info.AddValue("GroupMembers", GroupMembers, typeof(List<MemberData>));
         }
 
         public override bool Equals(object obj)

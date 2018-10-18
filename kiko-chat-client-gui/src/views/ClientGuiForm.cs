@@ -116,6 +116,7 @@ namespace kiko_chat_client_gui
                 {
                     groupData = groupForm.GroupProperty;
                     UpdateGroupAndMember(new GroupData(groupData.Ip, groupData.Port, groupData.Name, default(DateTime)));
+                    groupSelectorBox.SelectedIndex = 0;
                 }
                 else
                 {

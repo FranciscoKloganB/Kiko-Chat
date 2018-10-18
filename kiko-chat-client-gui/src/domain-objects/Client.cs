@@ -14,7 +14,8 @@ using System.Windows.Forms;
 namespace kiko_chat_client_gui.domain_objects
 {
     public delegate void SetBoxText(string Message);
-    public delegate void SetGroupMembers(string Nickname);
+    public delegate void SetGroupMember(string Nickname);
+    public delegate void UnsetGroupMember(string Nickname, string GapFiller);
 
     class Client : MarshalByRefObject, IClientObject
     {
@@ -86,17 +87,32 @@ namespace kiko_chat_client_gui.domain_objects
             }
         }
 
-        private void SetGroupMembers(string Nickname)
+        private void SetGroupMember(string Nickname)
         {
             Nickname = string.Join(Nickname, Environment.NewLine);
-            if (chat_window.InvokeRequired)
+            if (chat_members_box.InvokeRequired)
             {
-                chat_window.BeginInvoke(new SetGroupMembers(chat_window.AppendText), Nickname);
+                chat_members_box.BeginInvoke(new SetGroupMember(chat_members_box.AppendText), Nickname);
                 return;
             }
             else
             {
-                chat_window.AppendText(Nickname);
+                chat_members_box.AppendText(Nickname);
+            }
+        }
+
+        private void UnsetGroupMember(string Nickname)
+        {
+            Nickname = string.Join(Nickname, Environment.NewLine);
+            if (chat_members_box.InvokeRequired)
+            {
+                params object[] args = new object[] { Nickname, "" };
+                chat_members_box.BeginInvoke(new UnsetGroupMember(chat_members_box.Text.Replace, args));
+                return;
+            }
+            else
+            {
+                chat_members_box.Text.Replace(Nickname, "");
             }
         }
 
@@ -104,19 +120,20 @@ namespace kiko_chat_client_gui.domain_objects
 
         #region Contract Implementation
 
-        public void RecieveNewMessage(string message, DateTime messagetimestamp, MemberData sender, GroupData group)
+        public void RecieveNewMessage(string message, DateTime messagetimestamp)
         {
-            throw new NotImplementedException();
+            group_data.LastKnownMessage = messagetimestamp;
+            SetTextBox(message);
         }
 
-        public void AddMemberToGroup(MemberData newmember, GroupData group)
+        public void AddMemberToGroup(MemberData newmember)
         {
-            throw new NotImplementedException();
+            SetGroupMember(newmember.Nickname);
         }
 
-        public void RemoveMemberFromGroup(MemberData oldmember, GroupData group)
+        public void RemoveMemberFromGroup(MemberData oldmember)
         {
-            throw new NotImplementedException();
+            UnsetGroupMember(oldmember.Nickname);
         }
 
         public void KickedFromServer(string HostAddress)
@@ -182,7 +199,7 @@ namespace kiko_chat_client_gui.domain_objects
 
             foreach (MemberData member in members)
             {
-                SetGroupMembers(member.Nickname);
+                SetGroupMember(member.Nickname);
             }
         }
 

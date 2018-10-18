@@ -48,7 +48,6 @@ namespace kiko_chat_contracts.data_objects
             Country = (string)info.GetValue("Country", typeof(string));
         }
 
-
         /*
         * This method is called on serialization.
         */

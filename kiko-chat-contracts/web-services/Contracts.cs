@@ -102,21 +102,25 @@ namespace kiko_chat_contracts.web_services
     {
         /*
         * When server sends a broadcast to the client, he recieves a message belonging to another subscriber on some group, sent at a given time.
+        * Each client connection should hold a reference to a chat window. Servers send messages in the following format:
+        * [message_time_stamp] sender_nickname: actual message goes here
+        * Servers also send the messagetimestamp, so that the Client Connection Manager can store the time at which he recieved the last message.
+        * Client windows should add their own New Lines if they so desire.
         */
         [OperationContract]
-        void RecieveNewMessage(string message, DateTime messagetimestamp, MemberData sender, GroupData group);
+        void RecieveNewMessage(string message, DateTime messagetimestamp);
 
         /*
         *Endpoint to inform a member that some other user left a group therefore asking him to update is data.
         */
         [OperationContract]
-        void AddMemberToGroup(MemberData newmember, GroupData group);
+        void AddMemberToGroup(MemberData newmember);
        
         /*
         * Endpoint to inform a member that some other user left a group therefore asking him to update is data.
         */
         [OperationContract]
-        void RemoveMemberFromGroup(MemberData oldmember, GroupData group);
+        void RemoveMemberFromGroup(MemberData oldmember);
 
         /*
         * Kicks a member from a specific server with some IP.
