@@ -16,10 +16,16 @@ namespace kiko_chat_client_gui
     */
     public partial class ClientGuiForm : Form
     {
+        #region Fields
+
         private bool mouseDown;
         private Point lastLocation;
         private Member member;
         private List<Client> OpenChats = new List<Client>();
+
+        #endregion
+
+        #region Constructors
 
         public ClientGuiForm()
         {
@@ -36,7 +42,11 @@ namespace kiko_chat_client_gui
             }
             FillGuiInfo();
         }
-        
+
+        #endregion
+
+        #region Client Gui Loading Methods
+
         private void FillGuiInfo()
         {
             try
@@ -52,10 +62,9 @@ namespace kiko_chat_client_gui
             }
             catch (FileNotFoundException) { }
             catch (NullReferenceException) { }
-            catch (JsonException jE)
+            catch (JsonException)
             {
-                MessageBox.Show(jE.ToString());
-                // MessageBox.Show("Error occured during the loading of your previous groups. We are sorry for the inconvinience");
+                MessageBox.Show("Error occured during the loading of your previous groups. We are sorry for the inconvinience");
             } 
         }
 
@@ -78,21 +87,13 @@ namespace kiko_chat_client_gui
             }
         }
 
+        #endregion
+
+        #region Other Client Methods
+
         private string GetSelectedGroupHostAddress()
         {
             return member.Find_Group_By_Name(groupSelectorBox.SelectedItem.ToString()).HostAddress();
-        }
-
-        private void JoinGroupRequest(GroupData groupProperty, Member member)
-        {
-            // TODO >> Inform server that this member left the group.
-           throw new NotImplementedException();
-        }
-
-        private void CreateGroupRequest(GroupData groupProperty, Member member)
-        {
-            // TODO >> Inform server that this member left the group.
-            throw new NotImplementedException();
         }
 
         private void UpdateGroupAndMember(GroupData group)
@@ -100,6 +101,10 @@ namespace kiko_chat_client_gui
             member.Add_Group(group);
             groupSelectorBox.Items.Add(group.Name);
         }
+
+        #endregion
+
+        #region Client Gui Local Event Handlers
 
         private void GenerateGroupForm(object sender, EventArgs e, bool newgroup = false)
         {
@@ -110,23 +115,7 @@ namespace kiko_chat_client_gui
                 if (groupForm.ShowDialog() == DialogResult.OK)
                 {
                     groupData = groupForm.GroupProperty;
-                    try
-                    {
-                        MessageBox.Show($"Requesting server to {(newgroup ? "create" : "join")} group... Please wait");
-                        if (newgroup)
-                        {
-                            CreateGroupRequest(groupData, this.member);
-                        } else
-                        {
-                            JoinGroupRequest(groupData, this.member);
-                        }
-                        UpdateGroupAndMember(new GroupData(groupData.Ip, groupData.Port, groupData.Name, default(DateTime)));
-                    }
-                    catch (Exception exc)
-                    {
-                        // TODO Use better exceptions.
-                        MessageBox.Show(exc.Message);
-                    }
+                    UpdateGroupAndMember(new GroupData(groupData.Ip, groupData.Port, groupData.Name, default(DateTime)));
                 }
                 else
                 {
@@ -154,19 +143,11 @@ namespace kiko_chat_client_gui
             newMessageBox.Clear();
         }
 
-        private void ShowGroupMembers()
-        {
-
-            GroupData group = member.Find_Group_By_Name(groupSelectorBox.SelectedItem.ToString());
-            // TODO >> Request Server to send MemberData list belonging to this group.
-            // chatMembersBox.Text = group.Members_ToString();
-            throw new NotImplementedException();
-        }
-
         private void ConnectButton_Click(object sender, EventArgs e)
         {
+            // TODO >> Make a dictionary of { Key GroupData : Values [ChatWindow, ChatMembers] } to hold different objects for each group.
             GroupData groupdata = member.Find_Group_By_Name(groupSelectorBox.SelectedItem.ToString());
-            Client client = new Client(chatWindow, member.Get_Member_Data(), groupdata);
+            Client client = new Client(chatWindow, chatMembersBox, member.Get_Member_Data(), groupdata);
             OpenChats.Add(client);
             client.Do_RetriveGroupMembers();
         }
@@ -228,6 +209,10 @@ namespace kiko_chat_client_gui
             }
         }
 
+        #endregion
+
+        #region Other Local Event Handling Methods
+
         private void OnMouseDown(object sender, MouseEventArgs e)
         {
             mouseDown = true;
@@ -247,6 +232,10 @@ namespace kiko_chat_client_gui
                 this.Update();
             }
         }
+
+        #endregion
+
+        #region Client Gui Exiting Methods
 
         private void ClientGuiForm_FormClosed(object sender, FormClosedEventArgs e)
         {
@@ -270,5 +259,7 @@ namespace kiko_chat_client_gui
                 }
             }
         }
+
+        #endregion
     }
 }

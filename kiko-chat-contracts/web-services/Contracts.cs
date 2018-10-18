@@ -7,7 +7,7 @@ using kiko_chat_contracts.data_objects;
 // BeginInvoke instead of Invoke TO AVOID DEADLOCKS OF SYNCHRONOUS REMOTE OBJECT INVOCATION.
 namespace kiko_chat_contracts.web_services
 { 
-    //Declares the existance of a delegate MessageArrivedEvent that identifies the function we will use as when some <event> containing a message occurs.
+    // Declares the existance of a delegate MessageArrivedEvent that identifies the function we will use as when some <event> containing a message occurs.
     public delegate void MessageArrivedEvent(string Message);
 
     /*

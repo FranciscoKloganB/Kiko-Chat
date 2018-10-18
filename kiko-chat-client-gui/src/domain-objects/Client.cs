@@ -1,6 +1,7 @@
 ﻿using System;
-using System.Collections;
 using System.Net;
+using System.Collections;
+using System.Collections.Generic;
 using System.Net.Sockets;
 using System.Runtime.Remoting;
 using System.Runtime.Remoting.Channels;
@@ -13,6 +14,7 @@ using System.Windows.Forms;
 namespace kiko_chat_client_gui.domain_objects
 {
     public delegate void SetBoxText(string Message);
+    public delegate void SetGroupMembers(string Nickname);
 
     class Client : MarshalByRefObject, IClientObject
     {
@@ -23,6 +25,7 @@ namespace kiko_chat_client_gui.domain_objects
         private string server_proxy_url = "";
         private bool connected = false;
         private RichTextBox chat_window;
+        private TextBox chat_members_box;
         private MemberData member_data;
         private GroupData group_data;
         private TcpChannel tcpChannel;
@@ -31,15 +34,14 @@ namespace kiko_chat_client_gui.domain_objects
         private EventProxy eventProxy;
         private IServerObject server_proxy;
 
-
         #endregion
-
 
         #region Constructors
 
-        public Client(RichTextBox chatwindow, MemberData memberdata, GroupData groupdata)
+        public Client(RichTextBox chatwindow, TextBox chatmembersbox, MemberData memberdata, GroupData groupdata)
         {
             chat_window = chatwindow;
+            chat_members_box = chatmembersbox;
             member_data = memberdata;
             group_data = groupdata;
 
@@ -50,6 +52,7 @@ namespace kiko_chat_client_gui.domain_objects
             eventProxy = new EventProxy();
             eventProxy.MessageArrived += new MessageArrivedEvent(eventProxy_MessageArrived);
 
+            // TODO Name needs to be different for each client. " + Port"
             Hashtable channelProperties = new Hashtable() {
                 { "name", client_api_object},
                 { "port", Int32.Parse(groupdata.Port) }
@@ -62,6 +65,39 @@ namespace kiko_chat_client_gui.domain_objects
             RemotingConfiguration.RegisterWellKnownClientType(new WellKnownClientTypeEntry(typeof(IServerObject), server_proxy_url));
 
             Do_Connect();
+        }
+
+        #endregion
+
+        #region Delegate Invoking Methods
+
+        private void SetTextBox(string Message)
+        {
+            Message = string.Join(Message, Environment.NewLine);
+            // InvokeRequired verifies if the owner chatWindow is another thread other than the one calling this method. It certainly is, checking for sanity.
+            if (chat_window.InvokeRequired)
+            {
+                chat_window.BeginInvoke(new SetBoxText(chat_window.AppendText), Message);
+                return;
+            }
+            else
+            {
+                chat_window.AppendText(Message);
+            }
+        }
+
+        private void SetGroupMembers(string Nickname)
+        {
+            Nickname = string.Join(Nickname, Environment.NewLine);
+            if (chat_window.InvokeRequired)
+            {
+                chat_window.BeginInvoke(new SetGroupMembers(chat_window.AppendText), Nickname);
+                return;
+            }
+            else
+            {
+                chat_window.AppendText(Nickname);
+            }
         }
 
         #endregion
@@ -95,35 +131,23 @@ namespace kiko_chat_client_gui.domain_objects
 
         #endregion
 
-        #region Client Features Acting On Server Proxy
+        #region Client Features Interacting With The Server Proxy
 
         // This is the function we will use to add a message to the chat box of the proper group.
         private void eventProxy_MessageArrived(string Message)
         {
-            SetTextBox(chat_window, Message);
-        }
-
-        private void SetTextBox(RichTextBox chatWindow, string Message)
-        {
-            Message = string.Join(Message, Environment.NewLine);
-            // InvokeRequired verifies if the owner chatWindow is another thread other than the one calling this method. It certainly is, checking for sanity.
-            if (chatWindow.InvokeRequired)
-            {
-                chat_window.BeginInvoke(new SetBoxText(chat_window.AppendText), Message);
-                return;
-            }
-            else
-            {
-                chatWindow.AppendText(Message);
-            }
+            SetTextBox(Message);
         }
 
         public void Do_Connect()
         {
+            string chatHistory;
             try
             {
                 server_proxy = (IServerObject)Activator.GetObject(typeof(IServerObject), server_proxy_url);
-                server_proxy.Connect(member_data, group_data);
+                // TODO >> Consider "Connect" not returning a byte[], but instead having the server send a chat byte[] on it's own upon recieving the connection.
+                chatHistory = Convert.ToBase64String(server_proxy.Connect(member_data, group_data));
+                SetTextBox(chatHistory);
                 // Now we have to attach the events...
                 server_proxy.MessageArrived += new MessageArrivedEvent(eventProxy.LocallyHandleMessageArrived);
                 connected = true;
@@ -154,10 +178,12 @@ namespace kiko_chat_client_gui.domain_objects
         {
             if (!connected) { throw new OperationCanceledException("Program error: Tryed to retrieve group members from a group you are not currently connected to."); }
 
-            server_proxy.RetriveGroupMembers(member_data, group_data);
+            List<MemberData> members = server_proxy.RetriveGroupMembers(member_data, group_data);
 
-            // TODO >> Make group members textbox an actual list containing MemberData objects instead of only their names.
-            // TODO >> Display members of the current selected "Group Tab", which also needs to be implemented.
+            foreach (MemberData member in members)
+            {
+                SetGroupMembers(member.Nickname);
+            }
         }
 
         #endregion
