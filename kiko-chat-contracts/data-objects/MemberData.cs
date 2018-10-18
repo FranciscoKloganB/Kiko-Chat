@@ -62,5 +62,29 @@ namespace kiko_chat_contracts.data_objects
             info.AddValue("Email", Email, typeof(string));
             info.AddValue("Country", Country, typeof(string));
         }
+
+        public override bool Equals(object obj)
+        {
+            var item = obj as MemberData;
+
+            if (item == null)
+            {
+                return false;
+            }
+            else if (Nickname.Equals(item.Name))
+            {
+                return true;
+            }
+            else
+            {
+                return false;
+            }
+        }
+
+        public override int GetHashCode()
+        {
+            return Nickname.GetHashCode();
+        }
+
     }
 }

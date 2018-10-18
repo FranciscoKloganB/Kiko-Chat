@@ -156,8 +156,7 @@ namespace kiko_chat_client_gui
 
         private void ShowGroupMembers()
         {
-            // TODO >> Make group members textbox an actual list containing Member objects so that future versions can include sending direct messages to those members or obtain info about them.
-            // TODO >> Display members of the current selected "Group Tab", which also needs to be implemented.
+
             GroupData group = member.Find_Group_By_Name(groupSelectorBox.SelectedItem.ToString());
             // TODO >> Request Server to send MemberData list belonging to this group.
             // chatMembersBox.Text = group.Members_ToString();
@@ -166,19 +165,23 @@ namespace kiko_chat_client_gui
 
         private void ConnectButton_Click(object sender, EventArgs e)
         {
-            // TODO >> Inform server that this member is about to connect to this group, temporarily >> Open connection.
             GroupData groupdata = member.Find_Group_By_Name(groupSelectorBox.SelectedItem.ToString());
-            OpenChats.Add(new Client(chatWindow, member.Get_Member_Data(), groupdata));
-            // ShowGroupMembers();
+            Client client = new Client(chatWindow, member.Get_Member_Data(), groupdata);
+            OpenChats.Add(client);
+            client.Do_RetriveGroupMembers();
         }
 
         private void DisconnectButton_Click(object sender, EventArgs e)
         {
-            // TODO >> Inform server that this member is about to disconnect from this group, temporarily >> Close connection.
-            string hostAddress = GetSelectedGroupHostAddress();
-            // Send message to SV
-            // Close TCP connection
-            throw new NotImplementedException();
+            GroupData groupdata = member.Find_Group_By_Name(groupSelectorBox.SelectedItem.ToString());
+            foreach (Client openChat in OpenChats)
+            {
+                if (openChat.Equals(groupdata))
+                {
+                    openChat.Do_Disconnect();
+                }
+            }
+            // TODO >> Store conversation in a local FILE and update group_data with latest message timestamp;
         }
 
         private void CreateGroupButton_Click(object sender, EventArgs e)

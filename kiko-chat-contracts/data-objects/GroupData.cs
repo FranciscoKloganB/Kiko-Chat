@@ -42,6 +42,29 @@ namespace kiko_chat_contracts.data_objects
             info.AddValue("props", Name, typeof(string));
         }
 
+        public override bool Equals(object obj)
+        {
+            var item = obj as GroupData;
+
+            if (item == null)
+            {
+                return false;
+            }
+            else if (Name.Equals(item.Name) && Ip.Equals(item.Ip) && Port.Equals(item.Port))
+            {
+                return true;
+            }
+            else
+            {
+                return false;
+            }
+        }
+
+        public override int GetHashCode()
+        {
+            return Name.GetHashCode();
+        }
+
         public string HostAddress()
         {
             return Ip + ":" + Port;

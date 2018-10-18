@@ -95,7 +95,7 @@ namespace kiko_chat_client_gui.domain_objects
 
         #endregion
 
-        #region Client Features
+        #region Client Features Acting On Server Proxy
 
         // This is the function we will use to add a message to the chat box of the proper group.
         private void eventProxy_MessageArrived(string Message)
@@ -103,7 +103,22 @@ namespace kiko_chat_client_gui.domain_objects
             SetTextBox(chat_window, Message);
         }
 
-        private void Do_Connect()
+        private void SetTextBox(RichTextBox chatWindow, string Message)
+        {
+            Message = string.Join(Message, Environment.NewLine);
+            // InvokeRequired verifies if the owner chatWindow is another thread other than the one calling this method. It certainly is, checking for sanity.
+            if (chatWindow.InvokeRequired)
+            {
+                chat_window.BeginInvoke(new SetBoxText(chat_window.AppendText), Message);
+                return;
+            }
+            else
+            {
+                chatWindow.AppendText(Message);
+            }
+        }
+
+        public void Do_Connect()
         {
             try
             {
@@ -120,34 +135,43 @@ namespace kiko_chat_client_gui.domain_objects
             }
         }
 
-        public void Do_Disconnect(MemberData member, GroupData group)
+        public void Do_Disconnect()
         {
-            if (!connected) { return; }
-            // TODO Not Completed.
-            // First remove the event, then, close the channel and store conversation in local file and put last time stmap in group data for serialization upon gui closure.
+            if (!connected) { throw new InvalidOperationException("Not currenctly connected to the specified group."); }
+            server_proxy.Disconnect(member_data, group_data);
             server_proxy.MessageArrived -= eventProxy.LocallyHandleMessageArrived;
             ChannelServices.UnregisterChannel(tcpChannel);
         }
 
-        public void Do_Send(string message, MemberData member, GroupData group)
+        public void Do_Send(string message)
         {
-            if (!connected) { return; }
-            server_proxy.PublishMessage(message, DateTime.Now, member, group);
+            if (!connected) { throw new InvalidOperationException("You need to be connected to this group in order to send messages."); }
+
+            server_proxy.PublishMessage(message, DateTime.Now, member_data, group_data);
         }
 
-        private void SetTextBox(RichTextBox chatWindow, string Message)
+        public void Do_RetriveGroupMembers()
         {
-            Message = string.Join(Message, Environment.NewLine);
-            // InvokeRequired verifies if the owner chatWindow is another thread other than the one calling this method. It certainly is, checking for sanity.
-            if (chatWindow.InvokeRequired)
-            {
-                chat_window.BeginInvoke(new SetBoxText(chat_window.AppendText), Message);
-                return;
-            }
-            else
-            {
-                chatWindow.AppendText(Message);
-            }
+            if (!connected) { throw new OperationCanceledException("Program error: Tryed to retrieve group members from a group you are not currently connected to."); }
+
+            server_proxy.RetriveGroupMembers(member_data, group_data);
+
+            // TODO >> Make group members textbox an actual list containing MemberData objects instead of only their names.
+            // TODO >> Display members of the current selected "Group Tab", which also needs to be implemented.
+        }
+
+        #endregion
+
+        #region Other class methods
+
+        public override bool Equals(object obj)
+        {
+            return group_data.Equals(obj);
+        }
+
+        public override int GetHashCode()
+        {
+            return group_data.GetHashCode();
         }
 
         #endregion
