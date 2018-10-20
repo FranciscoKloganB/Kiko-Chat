@@ -21,7 +21,7 @@ namespace kiko_chat_client_gui.domain_objects
     {
         #region Fields
 
-        private const string client_api_object = "clientObject.rem";
+        private const string client_api_object = "clientObject";
         private const string server_api_object = "serverObject.rem";
         private string server_proxy_url = "";
         private bool connected = false;
@@ -37,42 +37,9 @@ namespace kiko_chat_client_gui.domain_objects
 
         #endregion
 
-        #region Constructors
-
-        public Client(RichTextBox chatwindow, ListBox chatmembersbox, MemberData memberdata, GroupData groupdata)
-        {
-            chat_window = chatwindow;
-            chat_members_box = chatmembersbox;
-            member_data = memberdata;
-            group_data = groupdata;
-
-            clientProvider = new BinaryClientFormatterSinkProvider();
-            serverProvider = new BinaryServerFormatterSinkProvider();
-            serverProvider.TypeFilterLevel = TypeFilterLevel.Full;
-
-            eventProxy = new EventProxy();
-            eventProxy.MessageArrived += new MessageArrivedEvent(eventProxy_MessageArrived);
-
-            // TODO Name needs to be different for each client. " + Port"
-            Hashtable channelProperties = new Hashtable() {
-                { "name", client_api_object},
-                { "port", Int32.Parse(groupdata.Port) }
-            };
-
-            tcpChannel = new TcpChannel(channelProperties, clientProvider, serverProvider);
-            ChannelServices.RegisterChannel(tcpChannel, false);
-
-            server_proxy_url = string.Join("tcp://", group_data.HostAddress(), "/", server_api_object);
-            RemotingConfiguration.RegisterWellKnownClientType(new WellKnownClientTypeEntry(typeof(IServerObject), server_proxy_url));
-
-            Do_Connect();
-        }
-
-        #endregion
-
         #region Delegate Invoking Methods
 
-        private void SetTextBox(string Message)
+        private void SetMessage(string Message)
         {
             Message = string.Join(Message, Environment.NewLine);
             // InvokeRequired verifies if the owner chatWindow is another thread other than the one calling this method. It certainly is, checking for sanity.
@@ -91,7 +58,7 @@ namespace kiko_chat_client_gui.domain_objects
         {
             if (chat_members_box.InvokeRequired)
             {
-                chat_members_box.BeginInvoke(new SetGroupMember(delegate { chat_members_box.Items.Add(member); } ));
+                chat_members_box.BeginInvoke(new SetGroupMember(delegate { chat_members_box.Items.Add(member); }));
                 return;
             }
             else
@@ -115,12 +82,49 @@ namespace kiko_chat_client_gui.domain_objects
 
         #endregion
 
+        #region Constructors
+
+        public Client(RichTextBox chatwindow, ListBox chatmembersbox, MemberData memberdata, GroupData groupdata)
+        {
+            chat_window = chatwindow;
+            chat_members_box = chatmembersbox;
+            member_data = memberdata;
+            group_data = groupdata;
+            server_proxy_url = string.Join("tcp://", group_data.HostAddress(), "/", server_api_object);
+
+            // Publishes this Client as a remote object that can be later referenced by some server.
+            int port_as_int = Int32.Parse(groupdata.Port);
+            string unique_name = string.Join(client_api_object, port_as_int, ".rem");
+            RemotingServices.Marshal(this, unique_name, typeof(Client));
+
+            /*
+            clientProvider = new BinaryClientFormatterSinkProvider();
+            serverProvider = new BinaryServerFormatterSinkProvider();
+            serverProvider.TypeFilterLevel = TypeFilterLevel.Full;
+            */
+            Hashtable channelProperties = new Hashtable() {
+                { "name", unique_name },
+                { "port", port_as_int }
+            };
+
+            /* tcpChannel = new TcpChannel(channelProperties, clientProvider, serverProvider); */
+            tcpChannel = new TcpChannel(channelProperties, null, null);
+
+            ;
+            ChannelServices.RegisterChannel(tcpChannel, false);
+            RemotingConfiguration.RegisterWellKnownClientType(new WellKnownClientTypeEntry(typeof(IServerObject), server_proxy_url));
+
+            Do_Connect();
+        }
+
+        #endregion
+
         #region Contract Implementation
 
         public void RecieveNewMessage(string message, DateTime messagetimestamp)
         {
             group_data.LastKnownMessage = messagetimestamp;
-            SetTextBox(message);
+            SetMessage(message);
         }
 
         public void AddMemberToGroup(MemberData newmember)
@@ -148,24 +152,19 @@ namespace kiko_chat_client_gui.domain_objects
 
         #region Client Features Interacting With The Server Proxy
 
-        // This is the function we will use to add a message to the chat box of the proper group.
-        private void eventProxy_MessageArrived(string Message)
-        {
-            SetTextBox(Message);
-        }
-
         public void Do_Connect()
         {
-            string chatHistory;
+            string chatHistory = "";
             try
             {
-                server_proxy = (IServerObject)Activator.GetObject(typeof(IServerObject), server_proxy_url);
                 // TODO >> Consider "Connect" not returning a byte[], but instead having the server send a chat byte[] on it's own upon recieving the connection.
+                server_proxy = (IServerObject)Activator.GetObject(typeof(IServerObject), server_proxy_url);
+                // Send a member_data and group_data so that a client can make the registration of this user.
                 chatHistory = Convert.ToBase64String(server_proxy.Connect(member_data, group_data));
-                SetTextBox(chatHistory);
-                // Now we have to attach the events...
-                server_proxy.MessageArrived += new MessageArrivedEvent(eventProxy.LocallyHandleMessageArrived);
+                // Set connected to true;
                 connected = true;
+                // Append the recieved chat history upon connection to the chat box of this group.
+                SetMessage(chatHistory);
             }
             catch (SocketException sE)
             {
