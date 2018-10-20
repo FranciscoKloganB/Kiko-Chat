@@ -126,12 +126,12 @@ namespace kiko_chat_contracts.web_services
         * Kicks a member from a specific server with some IP.
         */
         [OperationContract]
-        void KickedFromServer(string HostAddress);
+        void KickedFromServer();
 
         /*
         * Allows server to inform this member from other members who requested an update.
         */
         [OperationContract]
-        void UpdateGroupMember(MemberData member, GroupData group);
+        void UpdateGroupMember(MemberData member);
     }
 }

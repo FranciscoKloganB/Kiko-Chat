@@ -133,16 +133,17 @@ namespace kiko_chat_client_gui.domain_objects
             UnsetGroupMember(oldmember);
         }
 
-        public void KickedFromServer(string HostAddress)
+        public void UpdateGroupMember(MemberData member)
         {
-            throw new NotImplementedException();
+            UnsetGroupMember(member);
+            SetGroupMember(member);
         }
 
-        public void UpdateGroupMember(MemberData member, GroupData group)
+        public void KickedFromServer()
         {
-            throw new NotImplementedException();
+            Do_Disconnect();
         }
-
+         
         #endregion
 
         #region Client Features Interacting With The Server Proxy
@@ -179,6 +180,7 @@ namespace kiko_chat_client_gui.domain_objects
             server_proxy.Disconnect(member_data, group_data);
             server_proxy.MessageArrived -= eventProxy.LocallyHandleMessageArrived;
             ChannelServices.UnregisterChannel(tcpChannel);
+            // TODO >> Store group_data && chat.
         }
 
         public void Do_Send(string message)
