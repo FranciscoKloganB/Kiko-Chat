@@ -8,10 +8,17 @@ namespace kiko_chat_contracts.data_objects
     [Serializable]
     public class GroupData : ISerializable
     {
+        private object mutex = new object();
+
         public string Ip { get; set; }
         public string Port { get; set; }
         public string Name { get; set; }     
-        public DateTime LastKnownMessage { get; set; }
+        public DateTime LastKnownMessage
+        {
+            get { lock (mutex) { return LastKnownMessage; } }
+            set { lock (mutex) { LastKnownMessage = value; } }
+        }
+
         // DEPRECATED >> public List<MemberData> GroupMembers { get; set; }
 
         public GroupData(string ip, string port, string name, DateTime lastknownmessage)

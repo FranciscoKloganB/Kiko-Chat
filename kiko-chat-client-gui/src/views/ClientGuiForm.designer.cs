@@ -32,7 +32,6 @@
             this.newMessageBox = new System.Windows.Forms.TextBox();
             this.sendMsgButton = new System.Windows.Forms.Button();
             this.deleteMsgButton = new System.Windows.Forms.Button();
-            this.chatMembersBox = new System.Windows.Forms.TextBox();
             this.connectButton = new System.Windows.Forms.Button();
             this.disconnectButton = new System.Windows.Forms.Button();
             this.connectTooltip = new System.Windows.Forms.ToolTip(this.components);
@@ -49,6 +48,7 @@
             this.changeNickNameTooltip = new System.Windows.Forms.ToolTip(this.components);
             this.applyNickNameChangeButton = new System.Windows.Forms.Button();
             this.nickNameChangeBox = new System.Windows.Forms.TextBox();
+            this.chatMembersBox = new System.Windows.Forms.ListBox();
             this.SuspendLayout();
             // 
             // newMessageBox
@@ -82,18 +82,6 @@
             this.deleteMsgButton.Text = "Delete Message";
             this.deleteMsgButton.UseVisualStyleBackColor = true;
             this.deleteMsgButton.Click += new System.EventHandler(this.DeleteNewMessageButton_Click);
-            // 
-            // chatMembersBox
-            // 
-            this.chatMembersBox.Location = new System.Drawing.Point(831, 166);
-            this.chatMembersBox.Multiline = true;
-            this.chatMembersBox.Name = "chatMembersBox";
-            this.chatMembersBox.ReadOnly = true;
-            this.chatMembersBox.ScrollBars = System.Windows.Forms.ScrollBars.Vertical;
-            this.chatMembersBox.ShortcutsEnabled = false;
-            this.chatMembersBox.Size = new System.Drawing.Size(221, 520);
-            this.chatMembersBox.TabIndex = 9;
-            this.chatMembersBox.TabStop = false;
             // 
             // connectButton
             // 
@@ -191,11 +179,22 @@
             this.nickNameChangeBox.Enter += new System.EventHandler(this.nickNameChangeBox_Enter);
             this.nickNameChangeBox.Leave += new System.EventHandler(this.nickNameChangeBox_Leave);
             // 
+            // chatMembersBox
+            // 
+            this.chatMembersBox.DisplayMember = "Nickname";
+            this.chatMembersBox.FormattingEnabled = true;
+            this.chatMembersBox.Location = new System.Drawing.Point(831, 188);
+            this.chatMembersBox.Name = "chatMembersBox";
+            this.chatMembersBox.ScrollAlwaysVisible = true;
+            this.chatMembersBox.Size = new System.Drawing.Size(221, 394);
+            this.chatMembersBox.TabIndex = 9;
+            // 
             // ClientGuiForm
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.ClientSize = new System.Drawing.Size(1088, 711);
+            this.Controls.Add(this.chatMembersBox);
             this.Controls.Add(this.nickNameChangeBox);
             this.Controls.Add(this.applyNickNameChangeButton);
             this.Controls.Add(this.chatWindow);
@@ -205,7 +204,6 @@
             this.Controls.Add(this.createGroupButton);
             this.Controls.Add(this.disconnectButton);
             this.Controls.Add(this.connectButton);
-            this.Controls.Add(this.chatMembersBox);
             this.Controls.Add(this.deleteMsgButton);
             this.Controls.Add(this.sendMsgButton);
             this.Controls.Add(this.newMessageBox);
@@ -225,7 +223,6 @@
         private System.Windows.Forms.TextBox newMessageBox;
         private System.Windows.Forms.Button sendMsgButton;
         private System.Windows.Forms.Button deleteMsgButton;
-        private System.Windows.Forms.TextBox chatMembersBox;
         private System.Windows.Forms.Button connectButton;
         private System.Windows.Forms.ToolTip connectTooltip;
         private System.Windows.Forms.Button disconnectButton;
@@ -242,6 +239,7 @@
         private System.Windows.Forms.ToolTip changeNickNameTooltip;
         private System.Windows.Forms.Button applyNickNameChangeButton;
         private System.Windows.Forms.TextBox nickNameChangeBox;
+        private System.Windows.Forms.ListBox chatMembersBox;
     }
 }
 

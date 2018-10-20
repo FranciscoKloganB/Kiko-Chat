@@ -15,7 +15,7 @@ namespace kiko_chat_client_gui.domain_objects
 {
     public delegate void SetBoxText(string Message);
     public delegate void SetGroupMember(string Nickname);
-    public delegate void UnsetGroupMember(string Nickname, string GapFiller);
+    public delegate void UnsetGroupMember(params object[] args);
 
     class Client : MarshalByRefObject, IClientObject
     {
@@ -26,7 +26,7 @@ namespace kiko_chat_client_gui.domain_objects
         private string server_proxy_url = "";
         private bool connected = false;
         private RichTextBox chat_window;
-        private TextBox chat_members_box;
+        private ListBox chat_members_box;
         private MemberData member_data;
         private GroupData group_data;
         private TcpChannel tcpChannel;
@@ -39,7 +39,7 @@ namespace kiko_chat_client_gui.domain_objects
 
         #region Constructors
 
-        public Client(RichTextBox chatwindow, TextBox chatmembersbox, MemberData memberdata, GroupData groupdata)
+        public Client(RichTextBox chatwindow, ListBox chatmembersbox, MemberData memberdata, GroupData groupdata)
         {
             chat_window = chatwindow;
             chat_members_box = chatmembersbox;
@@ -87,32 +87,29 @@ namespace kiko_chat_client_gui.domain_objects
             }
         }
 
-        private void SetGroupMember(string Nickname)
+        private void SetGroupMember(MemberData member)
         {
-            Nickname = string.Join(Nickname, Environment.NewLine);
             if (chat_members_box.InvokeRequired)
             {
-                chat_members_box.BeginInvoke(new SetGroupMember(chat_members_box.AppendText), Nickname);
+                chat_members_box.BeginInvoke(new SetGroupMember(delegate { chat_members_box.Items.Add(member); } ));
                 return;
             }
             else
             {
-                chat_members_box.AppendText(Nickname);
+                chat_members_box.Items.Add(member);
             }
         }
 
-        private void UnsetGroupMember(string Nickname)
+        private void UnsetGroupMember(MemberData member)
         {
-            Nickname = string.Join(Nickname, Environment.NewLine);
             if (chat_members_box.InvokeRequired)
             {
-                params object[] args = new object[] { Nickname, "" };
-                chat_members_box.BeginInvoke(new UnsetGroupMember(chat_members_box.Text.Replace, args));
+                chat_members_box.BeginInvoke(new UnsetGroupMember(delegate { chat_members_box.Items.Add(member); }));
                 return;
             }
             else
             {
-                chat_members_box.Text.Replace(Nickname, "");
+                chat_members_box.Items.Remove(member);
             }
         }
 
@@ -128,12 +125,12 @@ namespace kiko_chat_client_gui.domain_objects
 
         public void AddMemberToGroup(MemberData newmember)
         {
-            SetGroupMember(newmember.Nickname);
+            SetGroupMember(newmember);
         }
 
         public void RemoveMemberFromGroup(MemberData oldmember)
         {
-            UnsetGroupMember(oldmember.Nickname);
+            UnsetGroupMember(oldmember);
         }
 
         public void KickedFromServer(string HostAddress)
@@ -199,7 +196,7 @@ namespace kiko_chat_client_gui.domain_objects
 
             foreach (MemberData member in members)
             {
-                SetGroupMember(member.Nickname);
+                SetGroupMember(member);
             }
         }
 

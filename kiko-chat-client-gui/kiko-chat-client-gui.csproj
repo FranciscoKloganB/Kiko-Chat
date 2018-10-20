@@ -51,8 +51,7 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="src\domain-objects\Client.cs" />
-    <Compile Include="src\client-objects\ClientService.cs" />
+    <Compile Include="src\client-objects\Client.cs" />
     <Compile Include="src\domain-objects\Member.cs" />
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
