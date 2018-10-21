@@ -98,6 +98,11 @@ namespace kiko_chat_server_console.server_objects
             }
 
             HostedGroups[groupname].Add(subscriber);
+
+            foreach (IClientObject activelisteners in HostedGroupsOnlineMembers[groupname])
+            {
+                activelisteners.AddMemberToGroup(subscriber);
+            }
         }
 
         /*
@@ -117,6 +122,13 @@ namespace kiko_chat_server_console.server_objects
             {
                 HostedGroups.Remove(groupname);
                 LastMessageRegistry.Remove(groupname);
+            }
+            else
+            {
+                foreach (IClientObject activelisteners in HostedGroupsOnlineMembers[groupname])
+                {
+                    activelisteners.RemoveMemberFromGroup(desubscriber);
+                }
             }
         }
 

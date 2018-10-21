@@ -11,32 +11,6 @@ namespace kiko_chat_contracts.web_services
     public delegate void MessageArrivedEvent(string Message);
 
     /*
-    * EventProxy inherits from MarshalByRefObject because the EventProxy is serialized from the server to the client and deserialized upon reaching the client side.
-    * This inheritance "teaches" the remoting framework needs to know how to marshal the object. MarshalByRefObject means that the object is marshaled across boundaries by reference.
-    * The reason we have this proxy class is because the server side needs to know about the implementation of the event consumer on the client side.
-    * If we didn't use a proxy class, the server would have to reference the client implementation so it knows how and where to call the function.
-    */
-    public class EventProxy : MarshalByRefObject
-    {
-        public event MessageArrivedEvent MessageArrived;
-
-        // Lease will never time out and the object associated with it will have an infinite lifetime. Could return null instead but doing it right follows OECM principle.
-        public override object InitializeLifetimeService() {
-            ILease lease = (ILease)base.InitializeLifetimeService();
-            lease.InitialLeaseTime = TimeSpan.Zero;
-            return lease;
-        }
-
-        public void LocallyHandleMessageArrived(string Message)
-        {
-            if (Message != null)
-            {
-                MessageArrived(Message);
-            }
-        }
-    }
-
-    /*
     * Interface that Concrete Server Objects need to implement.
     * Our Concrete Client Objects will recognize this interface, but won't know anything about the actual server implementation.
     * This allows for the client call into or get notified of events very loosely on the servers providing the chat functionality.
@@ -125,5 +99,4 @@ namespace kiko_chat_contracts.web_services
             info.AddValue("RemoteMessagge", RemoteMessagge);
         }
     }
-
 }

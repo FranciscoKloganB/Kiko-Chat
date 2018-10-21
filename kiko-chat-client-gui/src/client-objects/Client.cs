@@ -123,7 +123,7 @@ namespace kiko_chat_client_gui.domain_objects
             ChannelServices.RegisterChannel(tcpChannel, false);
             tcpChannel.StartListening(null);
 
-            Do_Connect();
+            server_proxy = (IServerObject)Activator.GetObject(typeof(IServerObject), server_proxy_url);
         }
 
         #endregion
@@ -171,8 +171,6 @@ namespace kiko_chat_client_gui.domain_objects
             DateTime lastMessageTimeStamp;
             try
             {
-                server_proxy = (IServerObject)Activator.GetObject(typeof(IServerObject), server_proxy_url);
-
                 lock (groupLocker)
                 {
                     groupName = group_data.Name;
