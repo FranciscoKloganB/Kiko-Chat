@@ -80,7 +80,7 @@ namespace kiko_chat_contracts.data_objects
             {
                 return false;
             }
-            else if (Nickname.Equals(item.Name))
+            else if (Nickname.Equals(item.Name) && Ip.Equals(item.Ip) && Port.Equals(item.Port))
             {
                 return true;
             }
@@ -92,7 +92,7 @@ namespace kiko_chat_contracts.data_objects
 
         public override int GetHashCode()
         {
-            return Nickname.GetHashCode() ^ Ip.GetHashCode();
+            return Nickname.GetHashCode() ^ Ip.GetHashCode() ^ Port.GetHashCode();
         }
 
     }

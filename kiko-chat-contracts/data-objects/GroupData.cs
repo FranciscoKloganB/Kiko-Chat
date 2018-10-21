@@ -8,16 +8,10 @@ namespace kiko_chat_contracts.data_objects
     [Serializable]
     public class GroupData : ISerializable
     {
-        private object mutex = new object();
-
         public string Ip { get; set; }
         public string Port { get; set; }
         public string Name { get; set; }     
-        public DateTime LastKnownMessage
-        {
-            get { lock (mutex) { return LastKnownMessage; } }
-            set { lock (mutex) { LastKnownMessage = value; } }
-        }
+        public DateTime LastKnownMessage { get; set; }  
 
         public GroupData(string ip, string port, string name, DateTime lastknownmessage)
         {
@@ -38,7 +32,6 @@ namespace kiko_chat_contracts.data_objects
             Port = (string)info.GetValue("Port", typeof(string));
             Name = (string)info.GetValue("Name", typeof(string));
             LastKnownMessage = (DateTime)info.GetValue("LastKnownMessage", typeof(DateTime));
-            // DEPRECATED >> GroupMembers = (List<MemberData>)info.GetValue("GroupMembers", typeof(List<MemberData>));
         }
 
         /*
@@ -46,12 +39,10 @@ namespace kiko_chat_contracts.data_objects
         */
         public void GetObjectData(SerializationInfo info, StreamingContext context)
         {
-            // Use the AddValue method to specify serialized values.
             info.AddValue("Ip", Ip, typeof(string));
             info.AddValue("Port", Port, typeof(string));
             info.AddValue("Name", Name, typeof(string));
             info.AddValue("LastKnownMessage", LastKnownMessage, typeof(DateTime));
-            // DEPRECATED >> info.AddValue("GroupMembers", GroupMembers, typeof(List<MemberData>));
         }
 
         public string HostAddress()

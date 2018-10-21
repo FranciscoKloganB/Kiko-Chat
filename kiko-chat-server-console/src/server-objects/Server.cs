@@ -1,27 +1,35 @@
 ﻿using kiko_chat_contracts.data_objects;
 using kiko_chat_contracts.web_services;
 using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.Runtime.Remoting;
 using System.Runtime.Remoting.Channels;
 using System.Runtime.Remoting.Channels.Tcp;
+using System.Runtime.Serialization.Formatters;
 
 namespace kiko_chat_server_console.server_objects
 {
     class Server : MarshalByRefObject, IServerObject
     {
+        /*
+        * OnlineMembers maps the users who are online for each group.
+        * Hosted Groups is a dictionary containg all Group Names hosted in the server and all members belonging to it, regardless of their online status.
+        * LastMessageRegistry is a dictionary containing all Group Names hosted in the server and the last messages recieved in that group, for chat updating purposes when the subscriber come online on that group.
+        */
         #region Fields
 
         private const string client_api_object = "clientObject";
         private const string server_api_object = "serverObject";
         private string well_known_port = "8080";
-        private bool server_is_active = false;
+        private BinaryServerFormatterSinkProvider server_provider;
         private TcpServerChannel tcpChannel;
         private ObjRef internalRef;
-        private Dictionary<GroupData, List<MemberData>> hosted_groups;
-        #endregion
+        private Dictionary<string, List<IClientObject>> HostedGroupsOnlineMembers;
+        private Dictionary<string, List<MemberData>> HostedGroups;
+        private Dictionary<string, DateTime> LastMessageRegistry;
 
-        public event MessageArrivedEvent MessageArrived;
+        #endregion
 
         #region Constructors
 
@@ -38,9 +46,18 @@ namespace kiko_chat_server_console.server_objects
                 well_known_port = port;
             }
 
-            hosted_groups = new Dictionary<GroupData, List<MemberData>>();
+            HostedGroupsOnlineMembers = new Dictionary<string, List<IClientObject>>();
+            HostedGroups = new Dictionary<string, List<MemberData>>();
+            LastMessageRegistry = new Dictionary<string, DateTime>();
 
-            TcpChannel tcpChannel = new TcpChannel(port_as_int);
+            Hashtable providerProperties = new Hashtable() {
+                { "port", well_known_port }
+            };
+
+            server_provider = new BinaryServerFormatterSinkProvider();
+            server_provider.TypeFilterLevel = TypeFilterLevel.Full;
+
+            tcpChannel = new TcpServerChannel(providerProperties, server_provider);
             ChannelServices.RegisterChannel(tcpChannel, false);
 
             internalRef = RemotingServices.Marshal(this, server_api_object, typeof(Server));
@@ -50,62 +67,119 @@ namespace kiko_chat_server_console.server_objects
 
         #region Contract Implementation
 
-        public byte[] Connect(MemberData member, GroupData group)
+        /*
+        *   Creates a new group at the server and adds the creator as a subscriber.
+        *   The subscriber is not marked as online after he creates the group. For him to send
+        * or listen to messages in the group he created he needs to connect.
+        */
+        public void CreateGroup(MemberData creator, string groupname)
         {
-            if (hosted_groups.ContainsKey(group))
+            if (HostedGroups.ContainsKey(groupname))
             {
-                hosted_groups[group].Add(member);
-            } else
-            {
-                List<MemberData> memberList = new List<MemberData>();
-                memberList.Add(member);
-                hosted_groups.Add(group, memberList);
+                throw new KikoServerException("The group you tryed to create already exists on the specified server.");
             }
 
-            Console.WriteLine($"Client with the following info just joined the server :{Environment.NewLine + member.ToString() + Environment.NewLine}, On group {group.Name} ");
-            IClientObject client_proxy = GetRemoteClientProxy(member);
-
-            client_proxy.RecieveNewMessage(Group_Load_ChatHistory(), DateTime.Now);
-
-            return null;
+            HostedGroups.Add(groupname, new List<MemberData>() { creator });
+            HostedGroupsOnlineMembers.Add(groupname, new List<IClientObject>());
+            LastMessageRegistry.Add(groupname, DateTime.Now);
+            PersistChat(groupname);
         }
 
-        public DateTime CreateGroup(MemberData owner, GroupData group)
+        /*
+        *   Adds the requestor as a subscriber to the the specified group.
+        *   The subscriber is not marked as online after he joins the group. For him to send
+        * or listen to messages in the group he joined he needs to connect.
+        */
+        public void JoinGroup(MemberData subscriber, string groupname)
         {
-            throw new NotImplementedException();
+            if (!HostedGroups.ContainsKey(groupname))
+            {
+                throw new KikoServerException("The group you tryed to join does not exist on the specified server.");
+            }
+
+            HostedGroups[groupname].Add(subscriber);
         }
 
-        public void Disconnect(MemberData member, GroupData group)
+        /*
+        *   Unsubscribes the requestor from the specified group.
+        *   He won't be able to send or listen to messages in this group until he rejoins. If group becomes empty, the group is destroyed.
+        */
+        public void LeaveGroup(MemberData desubscriber, string groupname)
         {
-            throw new NotImplementedException();
+            if (!HostedGroups.ContainsKey(groupname))
+            {
+                throw new KikoServerException("The group you tryed to unsubscribe no longer exists at the specified server");
+            }
+
+            HostedGroups[groupname].Remove(desubscriber);
+
+            if (HostedGroups[groupname].Count == 0)
+            {
+                HostedGroups.Remove(groupname);
+                LastMessageRegistry.Remove(groupname);
+            }
         }
 
-        public DateTime JoinGroup(MemberData subscribingmember, GroupData group)
+        /*
+        *   Marks a group subscriber as an active listener.
+        *   If the last message that subscriber recieved is older than the last message registred at the server,
+        * all messages happening from the user message onward are sent to him, so he can update is chat.
+        */
+        public void Connect(MemberData member, string groupname, DateTime lastknownmessagge)
         {
-            throw new NotImplementedException();
-        }
+            IClientObject client_proxy;
 
-        public void LeaveGroup(MemberData unsubscribingmember, GroupData group)
-        {
-            throw new NotImplementedException();
-        }
-
-        public void PublishMessage(string message, DateTime messagetimestamp, MemberData member, GroupData group)
-        {
-            string newMessage;
-            List<MemberData> memberList;
-            IClientObject member_proxy;
+            HandleConnectionRequest(member, groupname);
 
             try
             {
-                hosted_groups.TryGetValue(group, out memberList);
-                newMessage = $"[{messagetimestamp}] {member.Nickname}: {message}";
-                Persist_New_Message(newMessage, group);
-
-                foreach (MemberData subscriber in memberList)
+                client_proxy = GetRemoteClientProxy(member);
+                HostedGroupsOnlineMembers[groupname].Add(client_proxy);
+                UpdateClientChat(client_proxy, groupname, lastknownmessagge);
+            }
+            catch (Exception exc) {
+                if (exc is ArgumentNullException || exc is RemotingException || exc is MemberAccessException)
                 {
-                    member_proxy = GetRemoteClientProxy(subscriber);
-                    member_proxy.RecieveNewMessage(newMessage, messagetimestamp);
+                    Console.WriteLine($"User <{member.Nickname}>, request rejected. Reason: {exc.Message}");
+                } else
+                {
+                    Console.WriteLine("Unkwon exception occured during client proxy obtention...");
+                }
+            }
+        }
+
+        /*
+        *   Removes a group subscriber from the active listeners collection.
+        */
+        public void Disconnect(MemberData member, string groupname)
+        {
+            if (!HostedGroupsOnlineMembers.ContainsKey(groupname))
+            {
+                throw new KikoServerException("The group you tryed to disconnect from is not currently available at the specified server");
+            }
+            HostedGroupsOnlineMembers[groupname].Remove(GetRemoteClientProxy(member));
+        }
+
+        /*
+        *   Obtains a list of online members for the specified group hosted at this server and broadcasts the message
+        * for all of those subscribers.
+        *   The message is persisted at the server's chat history before being broadcasted.
+        */ 
+        public void PublishMessage(string message, string groupname, DateTime messagetimestamp, MemberData member)
+        {
+            string newMessage;
+            List<IClientObject> activeListeners;
+
+            try
+            {
+                HostedGroupsOnlineMembers.TryGetValue(groupname, out activeListeners);
+                newMessage = $"[{messagetimestamp}] {member.Nickname}: {message}";
+
+                PersistNewMessage(newMessage, groupname, messagetimestamp);
+
+                foreach (IClientObject listener in activeListeners)
+                {
+                    listener.RecieveNewMessage(newMessage, messagetimestamp);
                 }
             }
             catch (ArgumentNullException)
@@ -114,14 +188,43 @@ namespace kiko_chat_server_console.server_objects
             }
         }
 
-        public List<MemberData> RetriveGroupMembers(MemberData member, GroupData group)
+        /*
+        *   Returns a list of all members within a group.
+        *   Groups always have at least one member, so if the key exists, it will never be empty.
+        *   If the requesting member does not belong to the group or if the group does not exist, an error is returned
+        * to the requestor.
+        */
+        public List<MemberData> RetriveGroupMembers(string groupname, MemberData requestingmember)
         {
-            throw new NotImplementedException();
+            List<MemberData> groupMembers;
+            if (HostedGroups.TryGetValue(groupname, out groupMembers))
+            {
+                foreach (MemberData member in groupMembers)
+                {
+                    if (member.Equals(requestingmember))
+                    {
+                        return groupMembers;
+                    }
+                }
+            }
+            throw new KikoServerException("Unauthorized request: Only members within the group can request for other group members information.");
         }
 
-        public void UpdateMember(MemberData member)
+        /*
+        * Recieves a list of groups, ideally all groups the user belongs to on this server and requests the update.
+        */
+        public void UpdateMember(MemberData oldmemberdata, MemberData newmemberdata, List<string> subscribedgroups)
         {
-            throw new NotImplementedException();
+            foreach (string groupname in subscribedgroups)
+            {
+                int memberIndex = HostedGroups[groupname].FindIndex(member => member.Equals(oldmemberdata));
+                HostedGroups[groupname][memberIndex] = newmemberdata;
+
+                foreach(IClientObject activelisteners in HostedGroupsOnlineMembers[groupname])
+                {
+                    activelisteners.UpdateGroupMember(oldmemberdata, newmemberdata);
+                }
+            }
         }
 
         #endregion
@@ -137,19 +240,48 @@ namespace kiko_chat_server_console.server_objects
 
         #region Other class methods
 
-        private void Persist_New_Message(string message, GroupData group)
+        private void HandleConnectionRequest(MemberData member, string groupname)
+        {
+            Console.WriteLine($"User <{member.ToString()}> came online and is trying to join <{groupname}>{Environment.NewLine}");
+            if (HostedGroups.ContainsKey(groupname) && HostedGroupsOnlineMembers.ContainsKey(groupname))
+            {
+                Console.WriteLine($"User <{member.Nickname}>, request accepted");
+            } else
+            {
+                Console.WriteLine($"User <{member.Nickname}>, request rejected. Group is not on Hosted Groups, Online Group Members or both.");
+                throw new KikoServerException("The group your tryed to connect is not available. Try again later.");
+            }
+        }
+
+        private void PersistChat(string groupname)
         {
             throw new NotImplementedException();
         }
 
-        private string Group_Load_ChatHistory()
+        private void UpdateClientChat(IClientObject clientproxy, string groupname, DateTime lastknownmessage)
         {
+            DateTime lastMessage = LastMessageRegistry[groupname];
+            if (DateTime.Compare(lastknownmessage, lastMessage) < 0)
+            {
+                clientproxy.RecieveNewMessage(GetChat(groupname), lastMessage);
+            }
+        }
+
+        private string GetChat(string groupname)
+        {
+            throw new NotImplementedException();
+        }
+
+        private void PersistNewMessage(string message, string groupname, DateTime messagetimestamp)
+        {
+
             throw new NotImplementedException();
         }
 
         public void StartServer()
         {
             tcpChannel.StartListening(null);
+            Console.WriteLine($"Server proxy can now be obtained at <{tcpChannel.GetUrlsForUri(server_api_object)[0]}>{Environment.NewLine}");
             Console.WriteLine("Press <Enter> to shutdown server...");
         }
 

@@ -60,6 +60,7 @@ namespace kiko_chat_client_gui
                 }
                 groupSelectorBox.SelectedIndex = 0;
             }
+            catch (ArgumentOutOfRangeException) { }
             catch (FileNotFoundException) { }
             catch (NullReferenceException) { }
             catch (JsonException)

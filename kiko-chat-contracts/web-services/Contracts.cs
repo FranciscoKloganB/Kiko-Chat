@@ -44,57 +44,29 @@ namespace kiko_chat_contracts.web_services
     [ServiceContract]
     public interface IServerObject
     {
-        event MessageArrivedEvent MessageArrived;
-
-        /* 
-        * Establish a connection between the member and the server for the referenced Chat Group. Should verify if the user as permissions.
-        * User sends timestamp of last message he owns so that he can update is chat by turning the recieved byte array into a File using StreamReader.
-        */
         [OperationContract]
-        byte[] Connect(MemberData member, GroupData group);
+        void CreateGroup(MemberData creator, string groupname);
 
-        /*
-        * Close connection between member group. Whenever a user recieves a new message he should store the timestamp, so the disconnect method does not to return timestamps.
-        */
         [OperationContract]
-        void Disconnect(MemberData member, GroupData group);
+        void JoinGroup(MemberData subscriber, string groupname);
 
-        /*
-        * When a server recieves a message, it should be able to know from what user it comes from and what is the destination group of that message.
-        * This message is than broadcasted to the users of that group by invoking RecieveBroadCast on each member of that group.
-        */
         [OperationContract]
-        void PublishMessage(string message, DateTime messagetimestamp, MemberData member, GroupData group);
+        void LeaveGroup(MemberData desubscriber, string groupname);
 
-        /*
-        * Servers must allow a Member to change his data, including but not limited to, Nickname and IP. They must recieve the old member data for matching purposes and the new data to set.
-        */
         [OperationContract]
-        void UpdateMember(MemberData member);
+        void Connect(MemberData member, string groupname, DateTime lastknownmessagge);
 
-        /*
-        * This method allows a user to Request whose users belong to the group upon connection.
-        */
         [OperationContract]
-        List<MemberData> RetriveGroupMembers(MemberData member, GroupData group);
+        void Disconnect(MemberData member, string groupname);
 
-        /*
-        * This method allows users to create a new group. MemberData is sent together with the group data in order to place the user in that group immediatly.
-        */
         [OperationContract]
-        DateTime CreateGroup(MemberData owner, GroupData group);
+        void PublishMessage(string message, string groupname, DateTime messagetimestamp, MemberData member);
 
-        /*
-        * User subscribe to an existing group. Recieves a blank chat with the time stamp of the last message he recieved; Inform other users about new user.
-        */
         [OperationContract]
-        DateTime JoinGroup(MemberData subscribingmember, GroupData group);
+        void UpdateMember(MemberData oldmemberdata, MemberData newmemberdata, List<string> subscribedgroups);
 
-        /* 
-        * User unsubscribes user from an existing group. Should notifiy other subscribers about this.
-        */
         [OperationContract]
-        void LeaveGroup(MemberData unsubscribingmember, GroupData group);
+        List<MemberData> RetriveGroupMembers(string groupname, MemberData requestingmember);
     }
 
     [ServiceContract]
@@ -132,7 +104,7 @@ namespace kiko_chat_contracts.web_services
         * Allows server to inform this member from other members who requested an update.
         */
         [OperationContract]
-        void UpdateGroupMember(MemberData member);
+        void UpdateGroupMember(MemberData oldmemberdata, MemberData newmemberdata);
     }
 
     [Serializable]

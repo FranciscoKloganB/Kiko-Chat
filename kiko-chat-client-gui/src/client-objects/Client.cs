@@ -22,18 +22,18 @@ namespace kiko_chat_client_gui.domain_objects
     class Client : MarshalByRefObject, IClientObject
     {
         #region Fields
-
         private const string client_api_object = "clientObject";
         private const string server_api_object = "serverObject";
         private string server_proxy_url = "";
         private bool connected = false;
-        private ObjRef self;
+        private IServerObject server_proxy;
+        private TcpChannel tcpChannel;
+        private ObjRef internalRef;
         private RichTextBox chat_window;
         private ListBox chat_members_box;
         private MemberData member_data;
         private GroupData group_data;
-        private TcpChannel tcpChannel;
-        private IServerObject server_proxy;
+        private object groupLocker = new object();
 
         /*
         private BinaryClientFormatterSinkProvider clientProvider;
@@ -75,7 +75,7 @@ namespace kiko_chat_client_gui.domain_objects
         {
             if (chat_members_box.InvokeRequired)
             {
-                chat_members_box.BeginInvoke(new UnsetGroupMember(delegate { chat_members_box.Items.Add(member); }));
+                chat_members_box.BeginInvoke(new UnsetGroupMember(delegate { chat_members_box.Items.Remove(member); }));
                 return;
             }
             else
@@ -93,14 +93,19 @@ namespace kiko_chat_client_gui.domain_objects
             chat_window = chatwindow;
             chat_members_box = chatmembersbox;
             member_data = memberdata;
-            group_data = groupdata;
+
+            lock (groupLocker)
+            {
+                group_data = groupdata;
+            }
+
             server_proxy_url = string.Join("tcp://", group_data.HostAddress(), "/", server_api_object);
 
             int port_as_int = Int32.Parse(groupdata.Port);
             string unique_name = string.Join(client_api_object, port_as_int);
 
             // Create a ObjRef type of this Client with the specified URI
-            self = RemotingServices.Marshal(this, unique_name, typeof(Client));
+            internalRef = RemotingServices.Marshal(this, unique_name, typeof(Client));
 
             /*
             clientProvider = new BinaryClientFormatterSinkProvider();
@@ -127,7 +132,10 @@ namespace kiko_chat_client_gui.domain_objects
 
         public void RecieveNewMessage(string message, DateTime messagetimestamp)
         {
-            group_data.LastKnownMessage = messagetimestamp;
+            lock (groupLocker)
+            {
+                group_data.LastKnownMessage = messagetimestamp;
+            }
             SetMessage(message);
         }
 
@@ -141,10 +149,10 @@ namespace kiko_chat_client_gui.domain_objects
             UnsetGroupMember(oldmember);
         }
 
-        public void UpdateGroupMember(MemberData member)
+        public void UpdateGroupMember(MemberData oldmemberdata, MemberData memberData)
         {
-            UnsetGroupMember(member);
-            SetGroupMember(member);
+            UnsetGroupMember(oldmemberdata);
+            SetGroupMember(memberData);
         }
 
         public void KickedFromServer()
@@ -159,29 +167,41 @@ namespace kiko_chat_client_gui.domain_objects
         public void Do_Connect()
         {
             string chatHistory = "";
+            string groupName;
+            DateTime lastMessageTimeStamp;
             try
             {
-                // TODO >> Consider "Connect" not returning a byte[], but instead having the server send a chat byte[] on it's own upon recieving the connection.
-                // Get a proxy for a well known remote object
                 server_proxy = (IServerObject)Activator.GetObject(typeof(IServerObject), server_proxy_url);
-                // Send a member_data and group_data so that a client can make the registration of this user.
-                chatHistory = Convert.ToBase64String(server_proxy.Connect(member_data, group_data));
-                // Set connected to true;
-                connected = true;
-                // Append the recieved chat history upon connection to the chat box of this group.
+
+                lock (groupLocker)
+                {
+                    groupName = group_data.Name;
+                    lastMessageTimeStamp = group_data.LastKnownMessage;
+                }
+
+                server_proxy.Connect(member_data, groupName, lastMessageTimeStamp);
+
                 SetMessage(chatHistory);
-            }
-            catch (SocketException sE)
+                connected = true;
+
+            } catch (Exception exc)
             {
-                connected = false;
-                throw sE;
+                throw exc;
             }
         }
 
         public void Do_Disconnect(bool appshutdown = false)
         {
+            string groupName;
+
             if (!connected) { throw new InvalidOperationException("Not currenctly connected to the specified group."); }
-            server_proxy.Disconnect(member_data, group_data);
+
+            lock (groupLocker)
+            {
+                groupName = group_data.Name;
+            }
+
+            server_proxy.Disconnect(member_data, group_data.Name);
             // Instructs the current channel to stop listening for requests.
             if (!appshutdown) {
                 tcpChannel.StopListening(null);
@@ -199,14 +219,14 @@ namespace kiko_chat_client_gui.domain_objects
         {
             if (!connected) { throw new InvalidOperationException("You need to be connected to this group in order to send messages."); }
 
-            server_proxy.PublishMessage(message, DateTime.Now, member_data, group_data);
+            server_proxy.PublishMessage(message, group_data.Name, DateTime.Now, member_data);
         }
 
         public void Do_RetriveGroupMembers()
         {
             if (!connected) { throw new OperationCanceledException("Program error: Tryed to retrieve group members from a group you are not currently connected to."); }
 
-            List<MemberData> members = server_proxy.RetriveGroupMembers(member_data, group_data);
+            List<MemberData> members = server_proxy.RetriveGroupMembers(group_data.Name, member_data);
 
             foreach (MemberData member in members)
             {
