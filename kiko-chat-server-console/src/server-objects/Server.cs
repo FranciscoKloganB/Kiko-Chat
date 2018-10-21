@@ -1,12 +1,14 @@
-﻿using kiko_chat_contracts.data_objects;
-using kiko_chat_contracts.web_services;
-using System;
+﻿using System;
+using System.IO;
 using System.Collections;
 using System.Collections.Generic;
 using System.Runtime.Remoting;
 using System.Runtime.Remoting.Channels;
 using System.Runtime.Remoting.Channels.Tcp;
 using System.Runtime.Serialization.Formatters;
+using Newtonsoft.Json;
+using kiko_chat_contracts.data_objects;
+using kiko_chat_contracts.web_services;
 
 namespace kiko_chat_server_console.server_objects
 {
@@ -21,10 +23,11 @@ namespace kiko_chat_server_console.server_objects
 
         private const string client_api_object = "clientObject";
         private const string server_api_object = "serverObject";
-        private string well_known_port = "8080";
-        private BinaryServerFormatterSinkProvider server_provider;
-        private TcpServerChannel tcpChannel;
+        private string wellKnownPort = "8080";
+        private string persistenceDirectory;
         private ObjRef internalRef;
+        private BinaryServerFormatterSinkProvider serverProvider;
+        private TcpServerChannel tcpChannel;
         private Dictionary<string, List<IClientObject>> HostedGroupsOnlineMembers;
         private Dictionary<string, List<MemberData>> HostedGroups;
         private Dictionary<string, DateTime> LastMessageRegistry;
@@ -33,31 +36,28 @@ namespace kiko_chat_server_console.server_objects
 
         #region Constructors
 
-        public Server(string port)
+        public Server(string port, bool loadprevioussettings)
         {
-            Int32 port_as_int;
+            ParsePort(port);
 
-            if (!Int32.TryParse(port, out port_as_int))
+            if (loadprevioussettings) {
+                HostedGroupsOnlineMembers = new Dictionary<string, List<IClientObject>>();
+                LoadGroupData();
+            } else
             {
-                port_as_int = Int32.Parse(well_known_port);
+                HostedGroupsOnlineMembers = new Dictionary<string, List<IClientObject>>();
+                HostedGroups = new Dictionary<string, List<MemberData>>();
+                LastMessageRegistry = new Dictionary<string, DateTime>();
             }
-            else
-            {
-                well_known_port = port;
-            }
-
-            HostedGroupsOnlineMembers = new Dictionary<string, List<IClientObject>>();
-            HostedGroups = new Dictionary<string, List<MemberData>>();
-            LastMessageRegistry = new Dictionary<string, DateTime>();
 
             Hashtable providerProperties = new Hashtable() {
-                { "port", well_known_port }
+                { "port", wellKnownPort }
             };
 
-            server_provider = new BinaryServerFormatterSinkProvider();
-            server_provider.TypeFilterLevel = TypeFilterLevel.Full;
+            serverProvider = new BinaryServerFormatterSinkProvider();
+            serverProvider.TypeFilterLevel = TypeFilterLevel.Full;
 
-            tcpChannel = new TcpServerChannel(providerProperties, server_provider);
+            tcpChannel = new TcpServerChannel(providerProperties, serverProvider);
             ChannelServices.RegisterChannel(tcpChannel, false);
 
             internalRef = RemotingServices.Marshal(this, server_api_object, typeof(Server));
@@ -82,7 +82,7 @@ namespace kiko_chat_server_console.server_objects
             HostedGroups.Add(groupname, new List<MemberData>() { creator });
             HostedGroupsOnlineMembers.Add(groupname, new List<IClientObject>());
             LastMessageRegistry.Add(groupname, DateTime.Now);
-            PersistChat(groupname);
+            CreatePersistenceChatFile(groupname);
         }
 
         /*
@@ -175,7 +175,7 @@ namespace kiko_chat_server_console.server_objects
                 HostedGroupsOnlineMembers.TryGetValue(groupname, out activeListeners);
                 newMessage = $"[{messagetimestamp}] {member.Nickname}: {message}";
 
-                PersistNewMessage(newMessage, groupname, messagetimestamp);
+                PersistNewMessage(newMessage, groupname);
 
                 foreach (IClientObject listener in activeListeners)
                 {
@@ -240,22 +240,33 @@ namespace kiko_chat_server_console.server_objects
 
         #region Other class methods
 
+        private void ParsePort(string port)
+        {
+            Int32 port_as_int;
+
+            if (!Int32.TryParse(port, out port_as_int))
+            {
+                port_as_int = Int32.Parse(wellKnownPort);
+            }
+            else
+            {
+                wellKnownPort = port;
+            }
+            CreatePersistenceDirectory(port);
+        }
+
         private void HandleConnectionRequest(MemberData member, string groupname)
         {
             Console.WriteLine($"User <{member.ToString()}> came online and is trying to join <{groupname}>{Environment.NewLine}");
             if (HostedGroups.ContainsKey(groupname) && HostedGroupsOnlineMembers.ContainsKey(groupname))
             {
                 Console.WriteLine($"User <{member.Nickname}>, request accepted");
-            } else
+            }
+            else
             {
                 Console.WriteLine($"User <{member.Nickname}>, request rejected. Group is not on Hosted Groups, Online Group Members or both.");
                 throw new KikoServerException("The group your tryed to connect is not available. Try again later.");
             }
-        }
-
-        private void PersistChat(string groupname)
-        {
-            throw new NotImplementedException();
         }
 
         private void UpdateClientChat(IClientObject clientproxy, string groupname, DateTime lastknownmessage)
@@ -263,19 +274,14 @@ namespace kiko_chat_server_console.server_objects
             DateTime lastMessage = LastMessageRegistry[groupname];
             if (DateTime.Compare(lastknownmessage, lastMessage) < 0)
             {
-                clientproxy.RecieveNewMessage(GetChat(groupname), lastMessage);
+                clientproxy.RecieveNewMessage(PersistenceFileAsString(groupname), lastMessage);
             }
         }
 
-        private string GetChat(string groupname)
+        private void CreatePersistenceDirectory(string port)
         {
-            throw new NotImplementedException();
-        }
-
-        private void PersistNewMessage(string message, string groupname, DateTime messagetimestamp)
-        {
-
-            throw new NotImplementedException();
+            persistenceDirectory = Path.Combine(new string[] { AppDomain.CurrentDomain.BaseDirectory, "run", "server-group-chats", wellKnownPort });
+            Directory.CreateDirectory(persistenceDirectory);
         }
 
         public void StartServer()
@@ -290,6 +296,167 @@ namespace kiko_chat_server_console.server_objects
             tcpChannel.StopListening(null);
             ChannelServices.UnregisterChannel(tcpChannel);
             RemotingServices.Disconnect(this);
+
+            SaveGroupData();
+        }
+
+        #endregion
+
+        #region Chat Logging Methods
+
+        private void CreatePersistenceChatFile(string groupname)
+        {
+            string filePath = GetChatPath(groupname);
+            Console.WriteLine($"Attempting to create file for this group at: {filePath}...{Environment.NewLine}");
+            try
+            {
+                using (new FileStream(filePath, FileMode.CreateNew)) { }
+            }
+            catch (IOException)
+            {
+                Console.WriteLine($"File for group named {groupname} already exists. Skipping this step...{Environment.NewLine}");
+            }
+        }
+
+        private void PersistNewMessage(string message, string groupname)
+        {
+            string filePath = GetChatPath(groupname);
+            try
+            {
+                using (FileStream fileStream = new FileStream(filePath, FileMode.Append))
+                using (StreamWriter streamWriter = new StreamWriter(fileStream))
+                {
+                    streamWriter.Write(message);
+                }
+            } catch (Exception exc)
+            {
+                Console.WriteLine($"Error while trying to persistent new message of group: <{groupname}>...{Environment.NewLine}{exc.Message} ");
+            }
+        }
+
+        private string PersistenceFileAsString(string groupname)
+        {
+            string filePath = GetChatPath(groupname);
+            try
+            {
+                using(FileStream fileStream = new FileStream(filePath, FileMode.Open))
+                using (StreamReader streamReader = new StreamReader(filePath))
+                {
+                    string fileAsString = "";
+                    while (streamReader.Peek() >= 0)
+                    {
+                        string.Join(fileAsString, Environment.NewLine, streamReader.ReadLine());
+                    }
+                }
+
+            } catch (Exception exc)
+            {
+                Console.WriteLine($"Error while trying to read persistent chat log of group: <{groupname}>...{Environment.NewLine}{exc.Message} ");
+            }
+            return "";
+        }
+
+        private string GetChatPath(string groupname)
+        {
+            return string.Join(persistenceDirectory, "/", groupname, ".txt");
+        }
+
+        #endregion
+
+        #region Group Logging Methods
+
+        private void SaveGroupData()
+        {
+            string directoryPath = persistenceDirectory + "/server-settings";
+
+            SaveHostedGroups(directoryPath);
+            SaveLatestTimeStamps(directoryPath);
+        }
+
+        private void SaveHostedGroups(string directorypath)
+        {
+            try
+            {
+                using (StreamWriter streamWritter = new StreamWriter(directorypath + "/hosted-groups.json"))
+                using (JsonWriter jsonWritter = new JsonTextWriter(streamWritter))
+                {
+                    JsonSerializer serializer = new JsonSerializer();
+                    serializer.Serialize(jsonWritter, HostedGroups);
+                }
+            }
+            catch (Exception exc)
+            {
+                Console.WriteLine($"Error while storing hosted groups as JSON file...{Environment.NewLine}{exc.Message} ");
+            }
+        }
+
+        private void SaveLatestTimeStamps(string directorypath)
+        {
+            try
+            {
+                using (StreamWriter streamWritter = new StreamWriter(directorypath + "message-registry.json"))
+                using (JsonWriter jsonWritter = new JsonTextWriter(streamWritter))
+                {
+                    JsonSerializer serializer = new JsonSerializer();
+                    serializer.Serialize(jsonWritter, LastMessageRegistry);
+                }
+            }
+            catch (Exception exc)
+            {
+                Console.WriteLine($"Error while storing message timestamps as JSON file...{Environment.NewLine}{exc.Message} ");
+            }
+        }
+
+        private void LoadGroupData()
+        {
+            string directoryPath = persistenceDirectory + "/server-settings/";
+            try
+            {
+                HostedGroups = LoadHostedGroups(directoryPath);
+                LastMessageRegistry = LoadLatestTimeStamps(directoryPath);
+            }
+            catch(Exception exc)
+            {
+                Console.WriteLine($"Error loading server settings...{Environment.NewLine}{exc.Message}");
+            }
+        }
+
+        private Dictionary<string, List<MemberData>> LoadHostedGroups(string directorypath)
+        {
+            string filePath = directorypath + "/hosted-groups.json";
+
+            if (!File.Exists(filePath))
+            {
+                throw new InvalidOperationException("There is no HostedGroups to load previous settings from.");
+            }
+
+            using (StreamReader streamReader = new StreamReader(@filePath))
+            using (JsonReader jsonReader = new JsonTextReader(streamReader))
+            {
+                Dictionary<string, List<MemberData>> hostedGroups;
+                JsonSerializer serializer = new JsonSerializer();
+                hostedGroups = serializer.Deserialize<Dictionary<string, List<MemberData>>> (jsonReader);
+                return hostedGroups;
+            }
+        }
+
+        private Dictionary<string, DateTime> LoadLatestTimeStamps(string directorypath)
+        {
+
+            string filePath = directorypath + "/message-registry.json";
+            if (!File.Exists(filePath))
+            {
+                throw new InvalidOperationException("There is no LatestTimeStamps to load previous settings from.");
+            }
+
+            using (StreamReader streamReader = new StreamReader(@filePath))
+            using (JsonReader jsonReader = new JsonTextReader(streamReader))
+            {
+                Dictionary<string, DateTime> lastMessageRegistry;
+                JsonSerializer serializer = new JsonSerializer();
+                lastMessageRegistry = serializer.Deserialize<Dictionary<string, DateTime>>(jsonReader);
+                return lastMessageRegistry;
+            }
         }
 
         #endregion
