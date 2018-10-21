@@ -299,8 +299,7 @@ namespace kiko_chat_server_console.server_objects
         public void StartServer()
         {
             tcpChannel.StartListening(null);
-            Console.WriteLine($"Server proxy can now be obtained at <{tcpChannel.GetUrlsForUri(server_api_object)[0]}>{Environment.NewLine}");
-            Console.WriteLine("Press <Enter> to shutdown server...");
+            Console.WriteLine($"{Environment.NewLine}{Environment.NewLine}Server proxy can now be obtained at <{tcpChannel.GetUrlsForUri(server_api_object)[0]}>{Environment.NewLine}");
         }
 
         public void StopServer()

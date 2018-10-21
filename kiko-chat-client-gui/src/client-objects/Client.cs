@@ -249,6 +249,20 @@ namespace kiko_chat_client_gui.domain_objects
 
         #region Other class methods
 
+        public bool BelongsToGroup(GroupData groupdata, out Client client)
+        {
+            if (group_data.Equals(groupdata))
+            {
+                client = this;
+                return true;
+            }
+            else
+            {
+                client = null;
+                return false;
+            }
+        }
+
         public override bool Equals(object obj)
         {
             return group_data.Equals(obj);

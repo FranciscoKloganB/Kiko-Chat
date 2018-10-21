@@ -104,10 +104,27 @@ namespace kiko_chat_client_gui
             return member.Find_Group_By_Name(groupSelectorBox.SelectedItem.ToString()).HostAddress();
         }
 
-        private void UpdateGroupAndMember(GroupData group)
+        private Client TryGetGroupClient(GroupData groupdata, bool cancreate = false)
         {
-            member.Add_Group(group);
-            groupSelectorBox.Items.Add(group.Name);
+            Client targetClient;
+            foreach (Client openClient in openClients)
+            {
+                if (openClient.BelongsToGroup(groupdata, out targetClient))
+                {
+                    targetClient.Do_Connect();
+                    targetClient.Do_RetriveGroupMembers();
+                    return targetClient;
+                }
+            }
+
+            if (cancreate)
+            {
+                targetClient = new Client(chatWindow, chatMembersBox, member.Get_Member_Data(), groupdata);
+                openClients.Add(targetClient);
+                return targetClient;
+            }
+
+            return null;
         }
 
         #endregion
@@ -123,8 +140,22 @@ namespace kiko_chat_client_gui
                 if (groupForm.ShowDialog() == DialogResult.OK)
                 {
                     groupData = groupForm.GroupProperty;
-                    UpdateGroupAndMember(new GroupData(groupData.Ip, groupData.Port, groupData.Name, default(DateTime)));
+
+                    Client targetClient = TryGetGroupClient(groupData, cancreate: true);
+
+                    if (newgroup)
+                    {
+                        targetClient.Do_CreatGroup();
+                    }
+                    else
+                    {
+                        targetClient.Do_JoinGroup();
+                    }
+
+                    member.Add_Group(groupData);
+                    groupSelectorBox.Items.Add(groupData.Name);
                     groupSelectorBox.SelectedIndex = 0;
+
                 }
                 else
                 {
@@ -156,23 +187,22 @@ namespace kiko_chat_client_gui
         {
             // MARTELO ::: Not currently using chatWindowsDictionary nor chatMembersDictionary. Can only be connected to a group at a time.
             GroupData groupdata = member.Find_Group_By_Name(groupSelectorBox.SelectedItem.ToString());
-            Client client = new Client(chatWindow, chatMembersBox, member.Get_Member_Data(), groupdata);
-            if (!openClients.Contains(client))
-            {
-                openClients.Add(client);
-            }
-            client.Do_RetriveGroupMembers();
+
+            Client targetClient = TryGetGroupClient(groupdata, cancreate: true);
+
+            targetClient.Do_Connect();
+            targetClient.Do_RetriveGroupMembers();
         }
 
         private void DisconnectButton_Click(object sender, EventArgs e)
         {
             GroupData groupdata = member.Find_Group_By_Name(groupSelectorBox.SelectedItem.ToString());
-            foreach (Client openChat in openClients)
+
+            Client targetClient = TryGetGroupClient(groupdata, cancreate: false);
+                    
+            if (targetClient != null)
             {
-                if (openChat.Equals(groupdata))
-                {
-                    openChat.Do_Disconnect(appshutdown: false);
-                }
+                targetClient.Do_Disconnect(appshutdown: false);
             }
             // TODO >> Store conversation in a local FILE and update group_data with latest message timestamp;
         }
@@ -189,10 +219,15 @@ namespace kiko_chat_client_gui
 
         private void LeaveGroupButton_Click(object sender, EventArgs e)
         {
-            string groupName = groupSelectorBox.SelectedItem.ToString();
-            member.Leave_Group(groupName);
-            // TODO >> Inform server that this member left the group.
-            groupSelectorBox.Items.Remove(groupSelectorBox.SelectedItem);
+            GroupData groupdata = member.Find_Group_By_Name(groupSelectorBox.SelectedItem.ToString());
+            Client targetClient = TryGetGroupClient(groupdata, cancreate: true);
+
+            if (targetClient != null)
+            {
+                targetClient.Do_LeaveGroup();
+                member.Leave_Group(groupdata.Name);
+                groupSelectorBox.Items.Remove(groupSelectorBox.SelectedItem);
+            }
         }
 
         private void applyNickNameChangeButton_Click(object sender, EventArgs e)
