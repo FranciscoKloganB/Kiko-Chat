@@ -21,7 +21,9 @@ namespace kiko_chat_client_gui
         private bool mouseDown;
         private Point lastLocation;
         private Member member;
-        private List<Client> OpenChats = new List<Client>();
+        private Dictionary<string, List<RichTextBox>> chatWindowsDictionary;
+        private Dictionary<string, List<ListBox>> chatMembersDictionary;
+        private List<Client> openClients;
 
         #endregion
 
@@ -30,6 +32,11 @@ namespace kiko_chat_client_gui
         public ClientGuiForm()
         {
             InitializeComponent();
+
+            chatWindowsDictionary = new Dictionary<string, List<RichTextBox>>();
+            chatMembersDictionary = new Dictionary<string, List<ListBox>>();
+            openClients = new List<Client>();
+
             using (LoginForm loginForm = new LoginForm())
             {
                 MemberData memberData;      
@@ -147,22 +154,24 @@ namespace kiko_chat_client_gui
 
         private void ConnectButton_Click(object sender, EventArgs e)
         {
-            // TODO >> Make a dictionary of { Key GroupData : Values [ChatWindow, ChatMembers] } to hold different objects for each group.
+            // MARTELO ::: Not currently using chatWindowsDictionary nor chatMembersDictionary. Can only be connected to a group at a time.
             GroupData groupdata = member.Find_Group_By_Name(groupSelectorBox.SelectedItem.ToString());
             Client client = new Client(chatWindow, chatMembersBox, member.Get_Member_Data(), groupdata);
-            if (OpenChats.Contains(client)) 
-            OpenChats.Add(client);
+            if (!openClients.Contains(client))
+            {
+                openClients.Add(client);
+            }
             client.Do_RetriveGroupMembers();
         }
 
         private void DisconnectButton_Click(object sender, EventArgs e)
         {
             GroupData groupdata = member.Find_Group_By_Name(groupSelectorBox.SelectedItem.ToString());
-            foreach (Client openChat in OpenChats)
+            foreach (Client openChat in openClients)
             {
                 if (openChat.Equals(groupdata))
                 {
-                    openChat.Do_Disconnect();
+                    openChat.Do_Disconnect(appshutdown: false);
                 }
             }
             // TODO >> Store conversation in a local FILE and update group_data with latest message timestamp;
@@ -242,7 +251,7 @@ namespace kiko_chat_client_gui
 
         private void ClientGuiForm_FormClosed(object sender, FormClosedEventArgs e)
         {
-            foreach (Client client in OpenChats) {
+            foreach (Client client in openClients) {
                 client.Do_Disconnect(appshutdown: true);
             }
 

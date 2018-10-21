@@ -164,11 +164,28 @@ namespace kiko_chat_client_gui.domain_objects
 
         #region Client Features Interacting With The Server Proxy
 
+        public void Do_CreatGroup()
+        {
+            server_proxy.CreateGroup(member_data, group_data.Name);
+        }
+
+        public void Do_JoinGroup()
+        {
+            server_proxy.LeaveGroup(member_data, group_data.Name);
+        }
+
+        public void Do_LeaveGroup()
+        {
+            server_proxy.LeaveGroup(member_data, group_data.Name);
+        }
+
         public void Do_Connect()
         {
-            string chatHistory = "";
             string groupName;
             DateTime lastMessageTimeStamp;
+
+            if (connected) { return;  }
+            
             try
             {
                 lock (groupLocker)
@@ -176,12 +193,8 @@ namespace kiko_chat_client_gui.domain_objects
                     groupName = group_data.Name;
                     lastMessageTimeStamp = group_data.LastKnownMessage;
                 }
-
                 server_proxy.Connect(member_data, groupName, lastMessageTimeStamp);
-
-                SetMessage(chatHistory);
                 connected = true;
-
             } catch (Exception exc)
             {
                 throw exc;
@@ -192,7 +205,7 @@ namespace kiko_chat_client_gui.domain_objects
         {
             string groupName;
 
-            if (!connected) { throw new InvalidOperationException("Not currenctly connected to the specified group."); }
+            if (!connected) { return; }
 
             lock (groupLocker)
             {
