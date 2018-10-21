@@ -134,4 +134,24 @@ namespace kiko_chat_contracts.web_services
         [OperationContract]
         void UpdateGroupMember(MemberData member);
     }
+
+    [Serializable]
+    public class KikoServerException : ApplicationException
+    {
+        public string RemoteMessagge { get; set; }
+
+        public KikoServerException(string message) { RemoteMessagge = message; }
+
+        public KikoServerException(System.Runtime.Serialization.SerializationInfo info, System.Runtime.Serialization.StreamingContext context) : base(info, context)
+        {
+            RemoteMessagge = (string)info.GetValue("RemoteMessagge", typeof(string));
+        }
+
+        public override void GetObjectData(System.Runtime.Serialization.SerializationInfo info, System.Runtime.Serialization.StreamingContext context)
+        {
+            base.GetObjectData(info, context);
+            info.AddValue("RemoteMessagge", RemoteMessagge);
+        }
+    }
+
 }

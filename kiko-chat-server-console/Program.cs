@@ -7,15 +7,12 @@ namespace kiko_chat_server_console
     {
         static void Main(string[] args)
         {
-            Server server = new Server();
+            Console.WriteLine("Provide a well known port for your server");
+            Server server = new Server(Console.ReadLine());
+
             server.StartServer();
 
-            ConsoleKeyInfo keyInfo = Console.ReadKey();
-
-            while (keyInfo.Key != ConsoleKey.Enter)
-            {
-                keyInfo = Console.ReadKey();
-            }
+            while (Console.ReadKey(true).Key != ConsoleKey.Enter) { }
 
             server.StopServer();
         }

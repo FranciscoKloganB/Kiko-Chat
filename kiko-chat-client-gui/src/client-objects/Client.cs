@@ -11,6 +11,8 @@ using kiko_chat_contracts.web_services;
 using kiko_chat_contracts.data_objects;
 using System.Windows.Forms;
 
+// https://docs.microsoft.com/en-us/dotnet/api/system.runtime.remoting.wellknownclienttypeentry?view=netframework-4.7.2#remarks Explaining why you dont need to use WellKnownClass and Activator.GetObject simultaneously
+// https://docs.microsoft.com/en-us/dotnet/api/system.runtime.remoting.remotingservices.marshal?view=netframework-4.7.2
 namespace kiko_chat_client_gui.domain_objects
 {
     public delegate void SetBoxText(string Message);
@@ -22,19 +24,21 @@ namespace kiko_chat_client_gui.domain_objects
         #region Fields
 
         private const string client_api_object = "clientObject";
-        private const string server_api_object = "serverObject.rem";
+        private const string server_api_object = "serverObject";
         private string server_proxy_url = "";
         private bool connected = false;
+        private ObjRef self;
         private RichTextBox chat_window;
         private ListBox chat_members_box;
         private MemberData member_data;
         private GroupData group_data;
         private TcpChannel tcpChannel;
-        private BinaryClientFormatterSinkProvider clientProvider;
-        private BinaryServerFormatterSinkProvider serverProvider;
-        private EventProxy eventProxy;
         private IServerObject server_proxy;
 
+        /*
+        private BinaryClientFormatterSinkProvider clientProvider;
+        private BinaryServerFormatterSinkProvider serverProvider;
+        */
         #endregion
 
         #region Delegate Invoking Methods
@@ -92,16 +96,18 @@ namespace kiko_chat_client_gui.domain_objects
             group_data = groupdata;
             server_proxy_url = string.Join("tcp://", group_data.HostAddress(), "/", server_api_object);
 
-            // Publishes this Client as a remote object that can be later referenced by some server.
             int port_as_int = Int32.Parse(groupdata.Port);
-            string unique_name = string.Join(client_api_object, port_as_int, ".rem");
-            RemotingServices.Marshal(this, unique_name, typeof(Client));
+            string unique_name = string.Join(client_api_object, port_as_int);
+
+            // Create a ObjRef type of this Client with the specified URI
+            self = RemotingServices.Marshal(this, unique_name, typeof(Client));
 
             /*
             clientProvider = new BinaryClientFormatterSinkProvider();
             serverProvider = new BinaryServerFormatterSinkProvider();
             serverProvider.TypeFilterLevel = TypeFilterLevel.Full;
             */
+
             Hashtable channelProperties = new Hashtable() {
                 { "name", unique_name },
                 { "port", port_as_int }
@@ -109,10 +115,8 @@ namespace kiko_chat_client_gui.domain_objects
 
             /* tcpChannel = new TcpChannel(channelProperties, clientProvider, serverProvider); */
             tcpChannel = new TcpChannel(channelProperties, null, null);
-
-            ;
             ChannelServices.RegisterChannel(tcpChannel, false);
-            RemotingConfiguration.RegisterWellKnownClientType(new WellKnownClientTypeEntry(typeof(IServerObject), server_proxy_url));
+            tcpChannel.StartListening(null);
 
             Do_Connect();
         }
@@ -158,6 +162,7 @@ namespace kiko_chat_client_gui.domain_objects
             try
             {
                 // TODO >> Consider "Connect" not returning a byte[], but instead having the server send a chat byte[] on it's own upon recieving the connection.
+                // Get a proxy for a well known remote object
                 server_proxy = (IServerObject)Activator.GetObject(typeof(IServerObject), server_proxy_url);
                 // Send a member_data and group_data so that a client can make the registration of this user.
                 chatHistory = Convert.ToBase64String(server_proxy.Connect(member_data, group_data));
@@ -173,12 +178,20 @@ namespace kiko_chat_client_gui.domain_objects
             }
         }
 
-        public void Do_Disconnect()
+        public void Do_Disconnect(bool appshutdown = false)
         {
             if (!connected) { throw new InvalidOperationException("Not currenctly connected to the specified group."); }
             server_proxy.Disconnect(member_data, group_data);
-            server_proxy.MessageArrived -= eventProxy.LocallyHandleMessageArrived;
-            ChannelServices.UnregisterChannel(tcpChannel);
+            // Instructs the current channel to stop listening for requests.
+            if (!appshutdown) {
+                tcpChannel.StopListening(null);
+            } else
+            {
+                // Unregister tcpChannel from the registred channels list.
+                ChannelServices.UnregisterChannel(tcpChannel);
+                // Stops this client from recieving any messages through the registred remoting channels
+                RemotingServices.Disconnect(this);
+            }
             // TODO >> Store group_data && chat.
         }
 

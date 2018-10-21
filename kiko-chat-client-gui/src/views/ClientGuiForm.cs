@@ -149,6 +149,7 @@ namespace kiko_chat_client_gui
             // TODO >> Make a dictionary of { Key GroupData : Values [ChatWindow, ChatMembers] } to hold different objects for each group.
             GroupData groupdata = member.Find_Group_By_Name(groupSelectorBox.SelectedItem.ToString());
             Client client = new Client(chatWindow, chatMembersBox, member.Get_Member_Data(), groupdata);
+            if (OpenChats.Contains(client)) 
             OpenChats.Add(client);
             client.Do_RetriveGroupMembers();
         }
@@ -240,6 +241,10 @@ namespace kiko_chat_client_gui
 
         private void ClientGuiForm_FormClosed(object sender, FormClosedEventArgs e)
         {
+            foreach (Client client in OpenChats) {
+                client.Do_Disconnect(appshutdown: true);
+            }
+
             {
                 string directoryPath = Path.Combine(new string[] { AppDomain.CurrentDomain.BaseDirectory, "run", "json-groups" });
 

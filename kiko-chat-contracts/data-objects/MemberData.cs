@@ -62,6 +62,16 @@ namespace kiko_chat_contracts.data_objects
             info.AddValue("Country", Country, typeof(string));
         }
 
+        public string HostAddress()
+        {
+            return string.Join(Ip, ":", Port);
+        }
+
+        public override string ToString()
+        {
+            return string.Join(HostAddress(), "; ", Nickname, ";", Name, ";", Email, "; ", Country);
+        }
+
         public override bool Equals(object obj)
         {
             var item = obj as MemberData;
@@ -82,7 +92,7 @@ namespace kiko_chat_contracts.data_objects
 
         public override int GetHashCode()
         {
-            return Nickname.GetHashCode();
+            return Nickname.GetHashCode() ^ Ip.GetHashCode();
         }
 
     }

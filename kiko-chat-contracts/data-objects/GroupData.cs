@@ -19,8 +19,6 @@ namespace kiko_chat_contracts.data_objects
             set { lock (mutex) { LastKnownMessage = value; } }
         }
 
-        // DEPRECATED >> public List<MemberData> GroupMembers { get; set; }
-
         public GroupData(string ip, string port, string name, DateTime lastknownmessage)
         {
             Ip = ip;
@@ -43,7 +41,6 @@ namespace kiko_chat_contracts.data_objects
             // DEPRECATED >> GroupMembers = (List<MemberData>)info.GetValue("GroupMembers", typeof(List<MemberData>));
         }
 
-
         /*
         * This method is called on serialization.
         */
@@ -55,6 +52,16 @@ namespace kiko_chat_contracts.data_objects
             info.AddValue("Name", Name, typeof(string));
             info.AddValue("LastKnownMessage", LastKnownMessage, typeof(DateTime));
             // DEPRECATED >> info.AddValue("GroupMembers", GroupMembers, typeof(List<MemberData>));
+        }
+
+        public string HostAddress()
+        {
+            return string.Join(Ip, ":", Port);
+        }
+
+        public override string ToString()
+        {
+            return string.Join(HostAddress(), "; ", Name, "; ", LastKnownMessage.ToShortTimeString());
         }
 
         public override bool Equals(object obj)
@@ -77,17 +84,7 @@ namespace kiko_chat_contracts.data_objects
 
         public override int GetHashCode()
         {
-            return Name.GetHashCode();
-        }
-
-        public string HostAddress()
-        {
-            return Ip + ":" + Port;
-        }
-
-        public override string ToString()
-        {
-            return Ip + ":" + Port + "; " + Name + ";";
+            return Name.GetHashCode() ^ HostAddress().GetHashCode();
         }
     }
 }

@@ -1,41 +1,73 @@
-﻿using System;
+﻿using kiko_chat_contracts.data_objects;
+using kiko_chat_contracts.web_services;
+using System;
 using System.Collections.Generic;
 using System.Runtime.Remoting;
 using System.Runtime.Remoting.Channels;
 using System.Runtime.Remoting.Channels.Tcp;
-using System.Runtime.Serialization.Formatters;
-using kiko_chat_contracts.data_objects;
-using kiko_chat_contracts.web_services;
-using kiko_chat_contracts.security_objects;
-using System.Collections;
 
 namespace kiko_chat_server_console.server_objects
 {
-    /*
-    * Server inherits from MarshByRefObject because we want our server to be marshaled across boundaries using a reference to the server object (Proxy on the client side)
-    * Server implements IServerObject to force the implementation of the contracts the clients of this server expect to find on the proxy.
-    */
     class Server : MarshalByRefObject, IServerObject
     {
         #region Fields
-        /*
-        * TcpServerChannel is a reference to the TCP remoting channel that we are using for our server.
-        * ObjRef holds an internal reference to the object being presented (marshaled) for remoting
-        */
-        private const int RANDOM_PORT = 0;
-        private const string server_api_object = "serverObject.Rem";
-        private bool server_is_active = false;
-        private TcpServerChannel serverChannel;
-        private ObjRef internalRef;
 
+        private const string client_api_object = "clientObject";
+        private const string server_api_object = "serverObject";
+        private string well_known_port = "8080";
+        private bool server_is_active = false;
+        private TcpServerChannel tcpChannel;
+        private ObjRef internalRef;
+        private Dictionary<GroupData, List<MemberData>> hosted_groups;
         #endregion
-        #region IServerObject Member Implementation
 
         public event MessageArrivedEvent MessageArrived;
 
+        #region Constructors
+
+        public Server(string port)
+        {
+            Int32 port_as_int;
+
+            if (!Int32.TryParse(port, out port_as_int))
+            {
+                port_as_int = Int32.Parse(well_known_port);
+            }
+            else
+            {
+                well_known_port = port;
+            }
+
+            hosted_groups = new Dictionary<GroupData, List<MemberData>>();
+
+            TcpChannel tcpChannel = new TcpChannel(port_as_int);
+            ChannelServices.RegisterChannel(tcpChannel, false);
+
+            internalRef = RemotingServices.Marshal(this, server_api_object, typeof(Server));
+        }
+
+        #endregion
+
+        #region Contract Implementation
+
         public byte[] Connect(MemberData member, GroupData group)
         {
-            throw new NotImplementedException();
+            if (hosted_groups.ContainsKey(group))
+            {
+                hosted_groups[group].Add(member);
+            } else
+            {
+                List<MemberData> memberList = new List<MemberData>();
+                memberList.Add(member);
+                hosted_groups.Add(group, memberList);
+            }
+
+            Console.WriteLine($"Client with the following info just joined the server :{Environment.NewLine + member.ToString() + Environment.NewLine}, On group {group.Name} ");
+            IClientObject client_proxy = GetRemoteClientProxy(member);
+
+            client_proxy.RecieveNewMessage(Group_Load_ChatHistory(), DateTime.Now);
+
+            return null;
         }
 
         public DateTime CreateGroup(MemberData owner, GroupData group)
@@ -60,7 +92,26 @@ namespace kiko_chat_server_console.server_objects
 
         public void PublishMessage(string message, DateTime messagetimestamp, MemberData member, GroupData group)
         {
-            throw new NotImplementedException();
+            string newMessage;
+            List<MemberData> memberList;
+            IClientObject member_proxy;
+
+            try
+            {
+                hosted_groups.TryGetValue(group, out memberList);
+                newMessage = $"[{messagetimestamp}] {member.Nickname}: {message}";
+                Persist_New_Message(newMessage, group);
+
+                foreach (MemberData subscriber in memberList)
+                {
+                    member_proxy = GetRemoteClientProxy(subscriber);
+                    member_proxy.RecieveNewMessage(newMessage, messagetimestamp);
+                }
+            }
+            catch (ArgumentNullException)
+            {
+                throw new KikoServerException("You tryed to post a message to a non existing group.");
+            }
         }
 
         public List<MemberData> RetriveGroupMembers(MemberData member, GroupData group)
@@ -75,77 +126,38 @@ namespace kiko_chat_server_console.server_objects
 
         #endregion
 
-        #region Server Implementation
+        #region Other class methods that interact with client proxies.
+
+        private IClientObject GetRemoteClientProxy(MemberData member)
+        {
+            return (IClientObject)Activator.GetObject(typeof(IClientObject), string.Join("tcp://", member.HostAddress(), "/", client_api_object, member.Port));
+        }
+
+        #endregion
+
+        #region Other class methods
+
+        private void Persist_New_Message(string message, GroupData group)
+        {
+            throw new NotImplementedException();
+        }
+
+        private string Group_Load_ChatHistory()
+        {
+            throw new NotImplementedException();
+        }
 
         public void StartServer()
         {
-            if (server_is_active) { return; }
-
-            // Create properties for a TcpServerChannel that uses a Binary Sink.
-            Hashtable channelProperties = new Hashtable() {
-                { "name", server_api_object},
-                { "port", RANDOM_PORT }
-            };
-
-            // BinaryServerFormatterSinkProvider we provide events across remoting boundaries with binary implementation instead of XML. Filter to Full in order for events to work properly.
-            BinaryServerFormatterSinkProvider serverProv = new BinaryServerFormatterSinkProvider();
-            serverProv.TypeFilterLevel = TypeFilterLevel.Full;
-            serverChannel = new TcpServerChannel(channelProperties, serverProv);
-
-            Console.WriteLine($"Server running at: {serverChannel.GetUrlsForUri(server_api_object)[0]}");
-            Console.WriteLine("Press 'Enter' Key to shutdown the server");
-
-            try
-            {
-                ChannelServices.RegisterChannel(serverChannel, false);
-                internalRef = RemotingServices.Marshal(this, channelProperties["name"].ToString());
-                server_is_active = true;
-            }
-            catch (RemotingException rE)
-            {
-                Console.WriteLine("Could not start the server... " + Environment.NewLine + rE.Message);
-            }
+            tcpChannel.StartListening(null);
+            Console.WriteLine("Press <Enter> to shutdown server...");
         }
 
         public void StopServer()
         {
-            if (!server_is_active) { return; }
-
-            RemotingServices.Unmarshal(internalRef);
-
-            try
-            {
-                ChannelServices.UnregisterChannel(serverChannel);
-            }
-            catch (Exception) { }
-
-            Console.WriteLine($"Stoped server running at: {serverChannel.GetUrlsForUri(server_api_object)[0]}");
-        }
-
-        private void SafeInvokeMessageArrived(string Message)
-        {
-            if (!server_is_active) { return;  }
-            if (MessageArrived == null) { return; }
-
-            // We create a temporary delegate for the listener and then store the current invocation list that our event holds.
-            MessageArrivedEvent listener = null;         
-            Delegate[] dels = MessageArrived.GetInvocationList();
-            // We do this because while we are iterating through the invocation list, a client could remove itsel from the invocation list geting us into a thread un-safe situation.
-
-           // Loop through all the delegates and try to invoke them with the message.
-            foreach (Delegate del in dels)
-            {
-                try
-                {
-                    listener = (MessageArrivedEvent)del;
-                    listener.Invoke(Message);
-                }
-                catch (Exception)
-                {
-                    // If the invocation throws an exception, we remove it from the invocation list, effectively removing that client from receiving notifications
-                    MessageArrived -= listener;
-                }
-            }
+            tcpChannel.StopListening(null);
+            ChannelServices.UnregisterChannel(tcpChannel);
+            RemotingServices.Disconnect(this);
         }
 
         #endregion
