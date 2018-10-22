@@ -245,7 +245,7 @@ namespace kiko_chat_server_console.server_objects
 
         private IClientObject GetRemoteClientProxy(MemberData member)
         {
-            return (IClientObject)Activator.GetObject(typeof(IClientObject), string.Join("tcp://", member.HostAddress(), "/", client_api_object, member.Port));
+            return (IClientObject)Activator.GetObject(typeof(IClientObject), $"tcp://{member.Ip}/{client_api_object}");
         }
 
         #endregion
@@ -299,7 +299,7 @@ namespace kiko_chat_server_console.server_objects
         public void StartServer()
         {
             tcpChannel.StartListening(null);
-            Console.WriteLine($"{Environment.NewLine}{Environment.NewLine}Server proxy can now be obtained at <{tcpChannel.GetUrlsForUri(server_api_object)[0]}>{Environment.NewLine}");
+            Console.WriteLine($"{Environment.NewLine}Server proxy can now be obtained at <{tcpChannel.GetUrlsForUri(server_api_object)[0]}>{Environment.NewLine}");
         }
 
         public void StopServer()
@@ -356,7 +356,7 @@ namespace kiko_chat_server_console.server_objects
                     string fileAsString = "";
                     while (streamReader.Peek() >= 0)
                     {
-                        string.Join(fileAsString, Environment.NewLine, streamReader.ReadLine());
+                        fileAsString = fileAsString + Environment.NewLine + streamReader.ReadLine();
                     }
                 }
 
@@ -369,7 +369,7 @@ namespace kiko_chat_server_console.server_objects
 
         private string GetChatPath(string groupname)
         {
-            return string.Join(persistenceDirectory, "/", groupname, ".txt");
+            return $"{persistenceDirectory}/{groupname}.txt";
         }
 
         #endregion
@@ -428,7 +428,7 @@ namespace kiko_chat_server_console.server_objects
             }
             catch(Exception exc)
             {
-                Console.WriteLine($"Error loading server settings...{Environment.NewLine}{exc.Message}");
+                Console.WriteLine($"{Environment.NewLine}{Environment.NewLine}Error loading server settings...");
             }
         }
 
@@ -438,7 +438,7 @@ namespace kiko_chat_server_console.server_objects
 
             if (!File.Exists(filePath))
             {
-                throw new InvalidOperationException("There is no HostedGroups to load previous settings from.");
+                throw new InvalidOperationException($"{Environment.NewLine}There is no HostedGroups to load previous settings from.");
             }
 
             using (StreamReader streamReader = new StreamReader(@filePath))

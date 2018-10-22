@@ -16,8 +16,7 @@ namespace kiko_chat_client_gui
 
         private void ConfirmGroupForm_Click(object sender, EventArgs e)
         {
-            // string ip = Security.ValidateIP(ipBox.Text);
-            string ip = ipBox.Text;
+            string ip = Security.ValidateIP(ipBox.Text);
             string port = Security.ValidatePort(portBox.Text);
             string groupName = Security.ValidateRegularName(groupNameBox.Text, " Full Name");
             

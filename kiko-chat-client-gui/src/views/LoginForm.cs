@@ -56,12 +56,11 @@ namespace kiko_chat_client_gui
         {
             // string ip = Security.ValidateIP(clientAddress.Text);
             string ip = clientAddress.Text;
-            string port = Security.ValidatePort(portBox.Text);
             string nickname = Security.ValidateNickname(nickNameBox.Text, " Nickname *");
             string fullname = Security.ValidateRegularName(fullNameBox.Text, " Full Name");
             string email = Security.ValidateEmail(emailBox.Text);
             string country = Security.ValidateCountry(countryBox.Text, " Country");
-            MemberProperty = new MemberData(ip, port, nickname, fullname, email, country);
+            MemberProperty = new MemberData(ip, nickname, fullname, email, country);
             FormJsonLogin(MemberProperty);
             this.DialogResult = DialogResult.OK;
         }
@@ -80,8 +79,7 @@ namespace kiko_chat_client_gui
 
         private void loginForm_Load(object sender, EventArgs e)
         {
-            // TODO SET LOCAL PUBLIC ADDRESS
-            // clientAddress.Text = Security.GetLocalPublicAddress();
+            // TODO >> clientAddress.Text = Security.GetLocalPublicAddress();
             clientAddress.Text = "localhost";
         }
 
@@ -100,24 +98,6 @@ namespace kiko_chat_client_gui
             {
                 clientAddress.Text = " Internet Location";
                 clientAddress.ForeColor = Color.Silver;
-            }
-        }
-
-        private void portBox_Enter(object sender, EventArgs e)
-        {
-            if (portBox.Text.Equals(" Port *"))
-            {
-                portBox.Text = "";
-                portBox.ForeColor = Color.Black;
-            }
-        }
-
-        private void portBox_Leave(object sender, EventArgs e)
-        {
-            if (portBox.Text.Equals(""))
-            {
-                portBox.Text = " Port *";
-                portBox.ForeColor = Color.Silver;
             }
         }
 

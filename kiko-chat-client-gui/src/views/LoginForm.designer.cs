@@ -35,7 +35,6 @@
             this.emailBox = new System.Windows.Forms.TextBox();
             this.createSettingsButton = new System.Windows.Forms.Button();
             this.usePreviousLoginButton = new System.Windows.Forms.Button();
-            this.portBox = new System.Windows.Forms.TextBox();
             this.SuspendLayout();
             // 
             // nickNameBox
@@ -43,7 +42,7 @@
             this.nickNameBox.AcceptsReturn = true;
             this.nickNameBox.AcceptsTab = true;
             this.nickNameBox.ForeColor = System.Drawing.Color.Silver;
-            this.nickNameBox.Location = new System.Drawing.Point(12, 79);
+            this.nickNameBox.Location = new System.Drawing.Point(12, 53);
             this.nickNameBox.Name = "nickNameBox";
             this.nickNameBox.Size = new System.Drawing.Size(324, 20);
             this.nickNameBox.TabIndex = 2;
@@ -68,7 +67,7 @@
             this.fullNameBox.AcceptsReturn = true;
             this.fullNameBox.AcceptsTab = true;
             this.fullNameBox.ForeColor = System.Drawing.Color.Silver;
-            this.fullNameBox.Location = new System.Drawing.Point(12, 105);
+            this.fullNameBox.Location = new System.Drawing.Point(12, 79);
             this.fullNameBox.Name = "fullNameBox";
             this.fullNameBox.Size = new System.Drawing.Size(324, 20);
             this.fullNameBox.TabIndex = 3;
@@ -81,7 +80,7 @@
             this.countryBox.AcceptsReturn = true;
             this.countryBox.AcceptsTab = true;
             this.countryBox.ForeColor = System.Drawing.Color.Silver;
-            this.countryBox.Location = new System.Drawing.Point(12, 157);
+            this.countryBox.Location = new System.Drawing.Point(12, 131);
             this.countryBox.Name = "countryBox";
             this.countryBox.Size = new System.Drawing.Size(324, 20);
             this.countryBox.TabIndex = 5;
@@ -94,7 +93,7 @@
             this.emailBox.AcceptsReturn = true;
             this.emailBox.AcceptsTab = true;
             this.emailBox.ForeColor = System.Drawing.Color.Silver;
-            this.emailBox.Location = new System.Drawing.Point(12, 131);
+            this.emailBox.Location = new System.Drawing.Point(12, 105);
             this.emailBox.Name = "emailBox";
             this.emailBox.Size = new System.Drawing.Size(324, 20);
             this.emailBox.TabIndex = 4;
@@ -104,7 +103,7 @@
             // 
             // createSettingsButton
             // 
-            this.createSettingsButton.Location = new System.Drawing.Point(29, 183);
+            this.createSettingsButton.Location = new System.Drawing.Point(29, 157);
             this.createSettingsButton.Name = "createSettingsButton";
             this.createSettingsButton.Size = new System.Drawing.Size(147, 23);
             this.createSettingsButton.TabIndex = 6;
@@ -114,7 +113,7 @@
             // 
             // usePreviousLoginButton
             // 
-            this.usePreviousLoginButton.Location = new System.Drawing.Point(182, 183);
+            this.usePreviousLoginButton.Location = new System.Drawing.Point(182, 157);
             this.usePreviousLoginButton.Name = "usePreviousLoginButton";
             this.usePreviousLoginButton.Size = new System.Drawing.Size(132, 23);
             this.usePreviousLoginButton.TabIndex = 7;
@@ -122,25 +121,11 @@
             this.usePreviousLoginButton.UseVisualStyleBackColor = true;
             this.usePreviousLoginButton.Click += new System.EventHandler(this.UsePreviousSettings_Click);
             // 
-            // portBox
-            // 
-            this.portBox.AcceptsReturn = true;
-            this.portBox.AcceptsTab = true;
-            this.portBox.ForeColor = System.Drawing.Color.Silver;
-            this.portBox.Location = new System.Drawing.Point(12, 53);
-            this.portBox.Name = "portBox";
-            this.portBox.Size = new System.Drawing.Size(324, 20);
-            this.portBox.TabIndex = 1;
-            this.portBox.Text = " Port *";
-            this.portBox.Enter += new System.EventHandler(this.portBox_Enter);
-            this.portBox.Leave += new System.EventHandler(this.portBox_Leave);
-            // 
             // LoginForm
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
-            this.ClientSize = new System.Drawing.Size(355, 227);
-            this.Controls.Add(this.portBox);
+            this.ClientSize = new System.Drawing.Size(355, 201);
             this.Controls.Add(this.usePreviousLoginButton);
             this.Controls.Add(this.createSettingsButton);
             this.Controls.Add(this.emailBox);
@@ -165,6 +150,5 @@
         private System.Windows.Forms.TextBox emailBox;
         private System.Windows.Forms.Button createSettingsButton;
         private System.Windows.Forms.Button usePreviousLoginButton;
-        private System.Windows.Forms.TextBox portBox;
     }
 }

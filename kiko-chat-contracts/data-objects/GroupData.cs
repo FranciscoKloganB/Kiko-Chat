@@ -47,12 +47,12 @@ namespace kiko_chat_contracts.data_objects
 
         public string HostAddress()
         {
-            return string.Join(Ip, ":", Port);
+            return Ip + ":" + Port;
         }
 
         public override string ToString()
         {
-            return string.Join(HostAddress(), "; ", Name, "; ", LastKnownMessage.ToShortTimeString());
+            return HostAddress() + "; " + Name + "; " + LastKnownMessage.ToShortTimeString();
         }
 
         public override bool Equals(object obj)

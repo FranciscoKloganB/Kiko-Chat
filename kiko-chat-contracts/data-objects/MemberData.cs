@@ -7,27 +7,14 @@ namespace kiko_chat_contracts.data_objects
     public class MemberData : ISerializable
     {
         public string Ip { get; set; }
-        public string Port { get; set; }
         public string Nickname { get; set; }
         public string Name { get; set; }
         public string Email { get; set; }
         public string Country { get; set; }
 
-        public MemberData(string ip, string port, string nickname, string name, string email, string country)
+        public MemberData(string ip, string nickname, string name, string email, string country)
         {
             Ip = ip;
-            Port = port;
-            Nickname = nickname;
-            Name = name;
-            Email = email;
-            Country = country;
-        }
-
-        public MemberData(string currentlocation, string nickname, string name, string email, string country)
-        {
-            string[] location_split = currentlocation.Split(':');
-            Ip = location_split[0];
-            Port = location_split[1];
             Nickname = nickname;
             Name = name;
             Email = email;
@@ -41,7 +28,6 @@ namespace kiko_chat_contracts.data_objects
         {
             // Reset the property value using the GetValue method.
             Ip = (string)info.GetValue("Ip", typeof(string));
-            Port = (string)info.GetValue("Port", typeof(string));
             Nickname = (string)info.GetValue("Nickname", typeof(string));
             Name = (string)info.GetValue("Name", typeof(string));
             Email = (string)info.GetValue("Email", typeof(string));
@@ -55,21 +41,15 @@ namespace kiko_chat_contracts.data_objects
         {
             // Use the AddValue method to specify serialized values.
             info.AddValue("Ip", Ip, typeof(string));
-            info.AddValue("Port", Port, typeof(string));
             info.AddValue("Nickname", Nickname, typeof(string));
             info.AddValue("Name", Name, typeof(string));
             info.AddValue("Email", Email, typeof(string));
             info.AddValue("Country", Country, typeof(string));
         }
 
-        public string HostAddress()
-        {
-            return string.Join(Ip, ":", Port);
-        }
-
         public override string ToString()
         {
-            return string.Join(HostAddress(), "; ", Nickname, ";", Name, ";", Email, "; ", Country);
+            return Ip + "; " + Nickname + ";" + Name + ";" + Email + "; " + Country;
         }
 
         public override bool Equals(object obj)
@@ -80,7 +60,7 @@ namespace kiko_chat_contracts.data_objects
             {
                 return false;
             }
-            else if (Nickname.Equals(item.Name) && Ip.Equals(item.Ip) && Port.Equals(item.Port))
+            else if (Nickname.Equals(item.Name) && Ip.Equals(item.Ip))
             {
                 return true;
             }
@@ -92,7 +72,7 @@ namespace kiko_chat_contracts.data_objects
 
         public override int GetHashCode()
         {
-            return Nickname.GetHashCode() ^ Ip.GetHashCode() ^ Port.GetHashCode();
+            return Nickname.GetHashCode() ^ Ip.GetHashCode();
         }
 
     }
