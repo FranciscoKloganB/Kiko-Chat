@@ -64,12 +64,12 @@ namespace kiko_chat_contracts.data_objects
 
         public string HostAddress()
         {
-            return string.Join(Ip, ":", Port);
+            return Ip + ":" + Port;
         }
 
         public override string ToString()
         {
-            return string.Join(HostAddress(), "; ", Nickname, ";", Name, ";", Email, "; ", Country);
+            return HostAddress() + "; " + Nickname + ";" + Name + ";" + Email + "; " + Country;
         }
 
         public override bool Equals(object obj)

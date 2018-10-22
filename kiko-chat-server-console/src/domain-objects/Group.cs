@@ -46,7 +46,7 @@ namespace kiko_chat_server_console.domain {
 
             foreach (MemberData member in members)
             {
-                string.Join(stringifiedMembers, member.Nickname, Environment.NewLine);
+                stringifiedMembers = stringifiedMembers + member.Nickname + Environment.NewLine);
             }
 
             return stringifiedMembers;

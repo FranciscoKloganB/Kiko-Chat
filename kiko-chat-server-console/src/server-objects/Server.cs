@@ -245,7 +245,7 @@ namespace kiko_chat_server_console.server_objects
 
         private IClientObject GetRemoteClientProxy(MemberData member)
         {
-            return (IClientObject)Activator.GetObject(typeof(IClientObject), string.Join("tcp://", member.HostAddress(), "/", client_api_object, member.Port));
+            return (IClientObject)Activator.GetObject(typeof(IClientObject), $"tcp://{member.HostAddress()}/{client_api_object}{member.Port}");
         }
 
         #endregion
@@ -356,7 +356,7 @@ namespace kiko_chat_server_console.server_objects
                     string fileAsString = "";
                     while (streamReader.Peek() >= 0)
                     {
-                        string.Join(fileAsString, Environment.NewLine, streamReader.ReadLine());
+                        fileAsString = fileAsString + Environment.NewLine + streamReader.ReadLine());
                     }
                 }
 
@@ -369,7 +369,7 @@ namespace kiko_chat_server_console.server_objects
 
         private string GetChatPath(string groupname)
         {
-            return string.Join(persistenceDirectory, "/", groupname, ".txt");
+            return $"{persistenceDirectory}/{groupname}.txt";
         }
 
         #endregion

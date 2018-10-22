@@ -28,7 +28,7 @@ namespace kiko_chat_client_gui.domain_objects
 
         public Member(string ip, string port, string nickname, string fullname = NONE, string email = NONE, string country = NONE, List<GroupData> grouplist = null)
         {
-            CurrentLocation = string.Join(ip, ":", port);
+            CurrentLocation = ip + ":" + port;
             Nickname = nickname;
             Name = fullname;
             Country = country;

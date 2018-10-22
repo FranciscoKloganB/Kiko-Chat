@@ -45,7 +45,7 @@ namespace kiko_chat_client_gui.domain_objects
 
         private void SetMessage(string Message)
         {
-            Message = string.Join(Message, Environment.NewLine);
+            Message = Message + Environment.NewLine;
             // InvokeRequired verifies if the owner chatWindow is another thread other than the one calling this method. It certainly is, checking for sanity.
             if (chat_window.InvokeRequired)
             {
@@ -100,11 +100,10 @@ namespace kiko_chat_client_gui.domain_objects
             }
 
             string serverAddress = group_data.HostAddress();
-            MessageBox.Show(serverAddress);
             server_proxy_url = $"tcp://{serverAddress}/{server_api_object}";
-            MessageBox.Show(server_proxy_url);
+            MessageBox.Show("Server_proxy_url: " + server_proxy_url);
             int port_as_int = Int32.Parse(groupdata.Port);
-            string unique_name = string.Join(client_api_object, port_as_int);
+            string unique_name = client_api_object + port_as_int;
 
             // Create a ObjRef type of this Client with the specified URI
             internalRef = RemotingServices.Marshal(this, unique_name, typeof(Client));
