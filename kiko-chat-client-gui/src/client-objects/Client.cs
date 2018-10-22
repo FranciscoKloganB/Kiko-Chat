@@ -10,6 +10,7 @@ using System.Runtime.Serialization.Formatters;
 using kiko_chat_contracts.web_services;
 using kiko_chat_contracts.data_objects;
 using System.Windows.Forms;
+using kiko_chat_contracts.security_objects;
 
 // https://docs.microsoft.com/en-us/dotnet/api/system.runtime.remoting.wellknownclienttypeentry?view=netframework-4.7.2#remarks Explaining why you dont need to use WellKnownClass and Activator.GetObject simultaneously
 // https://docs.microsoft.com/en-us/dotnet/api/system.runtime.remoting.remotingservices.marshal?view=netframework-4.7.2
@@ -93,6 +94,7 @@ namespace kiko_chat_client_gui.domain_objects
             chat_window = chatwindow;
             chat_members_box = chatmembersbox;
             member_data = memberdata;
+            member_data.Ip = $"{member_data.Ip}:{Security.ValidatePort("")}";
 
             lock (groupLocker)
             {

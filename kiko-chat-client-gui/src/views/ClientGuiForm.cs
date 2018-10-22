@@ -43,7 +43,7 @@ namespace kiko_chat_client_gui
                 if (loginForm.ShowDialog() == DialogResult.OK)
                 {
                     memberData = loginForm.MemberProperty;
-                    this.member = new Member(memberData.Ip, memberData.Port, memberData.Nickname, memberData.Name, memberData.Email, memberData.Country);
+                    this.member = new Member(memberData.Ip, memberData.Nickname, memberData.Name, memberData.Email, memberData.Country);
                 }
                 loginForm.Dispose();
             }

@@ -46,7 +46,7 @@ namespace kiko_chat_server_console.domain {
 
             foreach (MemberData member in members)
             {
-                stringifiedMembers = stringifiedMembers + member.Nickname + Environment.NewLine);
+                stringifiedMembers = stringifiedMembers + member.Nickname + Environment.NewLine;
             }
 
             return stringifiedMembers;
@@ -54,7 +54,7 @@ namespace kiko_chat_server_console.domain {
 
         public override string ToString()
         {
-            return Ip + ":" + Port + "; " + Name + ";" + Environment.NewLine + members.ToString();
+            return Ip + "; " + Name + ";" + Environment.NewLine + members.ToString();
         }
 
         public override bool Equals(object obj)

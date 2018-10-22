@@ -9,26 +9,16 @@ namespace kiko_chat_client_gui.domain_objects
     {
         private const string NONE = "Not Available";
 
-        public string CurrentLocation { get; set; }
+        public string Ip { get; set; }
         public string Nickname { get; set; }
         public string Name { get; set; }
         public string Email { get; set; }
         public string Country { get; set; }
         private List<GroupData> groups;
 
-        public Member(string currentLocation, string nickname, string fullname = NONE, string email = NONE, string country = NONE, List<GroupData> grouplist = null)
+        public Member(string ip, string nickname, string fullname = NONE, string email = NONE, string country = NONE, List<GroupData> grouplist = null)
         {
-            CurrentLocation = currentLocation;
-            Nickname = nickname;
-            Name = fullname;
-            Country = country;
-            Email = email;
-            groups = (grouplist == null ? new List<GroupData>() : grouplist);
-        }
-
-        public Member(string ip, string port, string nickname, string fullname = NONE, string email = NONE, string country = NONE, List<GroupData> grouplist = null)
-        {
-            CurrentLocation = ip + ":" + port;
+            Ip = ip;
             Nickname = nickname;
             Name = fullname;
             Country = country;
@@ -38,7 +28,7 @@ namespace kiko_chat_client_gui.domain_objects
 
         public MemberData Get_Member_Data()
         {
-            return new MemberData(CurrentLocation, Nickname, Name, Email, Country);
+            return new MemberData(Ip, Nickname, Name, Email, Country);
         }
 
         public GroupData Find_Group_By_Name(string groupname)
@@ -69,7 +59,7 @@ namespace kiko_chat_client_gui.domain_objects
 
         public override string ToString()
         {
-            return CurrentLocation + "; " + Nickname + "; " + Name + "; " + Country + "; " + Email + ";";
+            return Ip + "; " + Nickname + "; " + Name + "; " + Country + "; " + Email + ";";
         }
 
         public override bool Equals(object obj)

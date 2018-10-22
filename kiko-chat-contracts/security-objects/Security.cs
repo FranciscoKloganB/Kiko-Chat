@@ -29,10 +29,13 @@ namespace kiko_chat_contracts.security_objects
         public static string ValidateIP(string ip, string placeholder = null)
         {
             IPAddress clientIpAddr;
-
-            if (IPAddress.TryParse(ip, out clientIpAddr))
+            if (ip == "localhost")
             {
                 return ip;
+            }
+            else if (IPAddress.TryParse(ip, out clientIpAddr))
+            {
+                return clientIpAddr.ToString();
             }
             else
             {
@@ -45,9 +48,11 @@ namespace kiko_chat_contracts.security_objects
             Int32 int32;
             if (Int32.TryParse(port, out int32) && 1 < int32 && int32 < 65534)
             {
-                return port;
+                return int32.ToString();
+            } else
+            {
+                return new Random().Next(1025, 65534).ToString();
             }
-            return new Random().Next(1025, 65534).ToString();
         }
 
         public static string ValidateNickname(string nickname, string placeholder = null)
