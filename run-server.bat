@@ -1,0 +1,1 @@
+start E:\GitHub\KChat\kiko-chat-server-console\bin\Debug\kiko-chat-server-console.exe
