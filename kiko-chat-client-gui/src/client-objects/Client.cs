@@ -93,8 +93,10 @@ namespace kiko_chat_client_gui.domain_objects
         {
             chat_window = chatwindow;
             chat_members_box = chatmembersbox;
+
+            string randomPort = Security.ValidatePort("");
             member_data = memberdata;
-            member_data.Ip = $"{member_data.Ip}:{Security.ValidatePort("")}";
+            member_data.Ip = $"{member_data.Ip}:{randomPort}";
 
             lock (groupLocker)
             {
@@ -102,15 +104,12 @@ namespace kiko_chat_client_gui.domain_objects
             }
 
             string serverAddress = group_data.HostAddress();
+            string unique_name = client_api_object + randomPort;
+
             server_proxy_url = $"tcp://{serverAddress}/{server_api_object}";
             MessageBox.Show("Server_proxy_url: " + server_proxy_url);
-            int port_as_int = Int32.Parse(groupdata.Port);
-            string unique_name = client_api_object + port_as_int;
 
-            // Create a ObjRef type of this Client with the specified URI
-            internalRef = RemotingServices.Marshal(this, unique_name, typeof(Client));
-
-            /*
+             /*
             clientProvider = new BinaryClientFormatterSinkProvider();
             serverProvider = new BinaryServerFormatterSinkProvider();
             serverProvider.TypeFilterLevel = TypeFilterLevel.Full;
@@ -118,14 +117,16 @@ namespace kiko_chat_client_gui.domain_objects
 
             Hashtable channelProperties = new Hashtable() {
                 { "name", unique_name },
-                { "port", port_as_int }
+                { "port", Int32.Parse(randomPort) }
             };
 
             /* tcpChannel = new TcpChannel(channelProperties, clientProvider, serverProvider); */
             tcpChannel = new TcpChannel(channelProperties, null, null);
             ChannelServices.RegisterChannel(tcpChannel, false);
-            tcpChannel.StartListening(null);
+            //tcpChannel.StartListening(null);
 
+            // Create a ObjRef type of this Client with the specified URI
+            internalRef = RemotingServices.Marshal(this, unique_name, typeof(Client));
             server_proxy = (IServerObject)Activator.GetObject(typeof(IServerObject), server_proxy_url);
         }
 

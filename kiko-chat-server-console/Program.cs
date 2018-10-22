@@ -22,7 +22,7 @@ namespace kiko_chat_server_console
 
             server.StopServer();
 
-            System.Threading.Thread.Sleep(5);
+            System.Threading.Thread.Sleep(5000);
         }
     }
 }
