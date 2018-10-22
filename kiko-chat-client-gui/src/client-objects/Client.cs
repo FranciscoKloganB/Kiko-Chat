@@ -99,8 +99,10 @@ namespace kiko_chat_client_gui.domain_objects
                 group_data = groupdata;
             }
 
-            server_proxy_url = string.Join("tcp://", group_data.HostAddress(), "/", server_api_object);
-
+            string serverAddress = group_data.HostAddress();
+            MessageBox.Show(serverAddress);
+            server_proxy_url = $"tcp://{serverAddress}/{server_api_object}";
+            MessageBox.Show(server_proxy_url);
             int port_as_int = Int32.Parse(groupdata.Port);
             string unique_name = string.Join(client_api_object, port_as_int);
 
