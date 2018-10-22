@@ -54,7 +54,8 @@ namespace kiko_chat_client_gui
 
         private void AcceptNewSetting_Click(object sender, EventArgs e)
         {
-            string ip = Security.ValidateIP(clientAddress.Text);
+            // string ip = Security.ValidateIP(clientAddress.Text);
+            string ip = clientAddress.Text;
             string port = Security.ValidatePort(portBox.Text);
             string nickname = Security.ValidateNickname(nickNameBox.Text, " Nickname *");
             string fullname = Security.ValidateRegularName(fullNameBox.Text, " Full Name");
@@ -79,7 +80,9 @@ namespace kiko_chat_client_gui
 
         private void loginForm_Load(object sender, EventArgs e)
         {
-            clientAddress.Text = Security.GetLocalPublicAddress();
+            // TODO SET LOCAL PUBLIC ADDRESS
+            // clientAddress.Text = Security.GetLocalPublicAddress();
+            clientAddress.Text = "localhost";
         }
 
         private void clientAddress_Enter(object sender, EventArgs e)
