@@ -4,6 +4,7 @@
 #### Priority tasks
 * Fix bug where servers try to open already open connections
 * Test if messages are correctly being sent from Client to Server and if other Clientes connected to that server are recieving the broadcasts.
+* Fix bug where connections are only possible with localhost addresses/ports instead of public IPs.
 
 #### Other tasks
 * Check TODO annotations and/or 'NotImplementedException()' on the source code on the solution itself.
